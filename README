@@ -1,0 +1,19 @@
+Rename .env_sample to .env and change whatever params you want
+
+
+your token is stored in cert/tokens.json. It's safe to disable cert.save() function
+if you don't feel like to store it.
+
+
+
+api endpoints:
+
+login      /your_uuid/your_2FA
+profile    /profile/user_psn_name
+
+
+issue:
+no actual check for token expire time;
+Poor error handling;
+messy code;
+
