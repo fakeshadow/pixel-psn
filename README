@@ -6,10 +6,14 @@ if you don't feel like to store it.
 
 
 
+
+
 api endpoints:
 
-login      /your_uuid/your_2FA
+*check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
+login      /your_uuid/your_2FA           
 profile    /profile/user_psn_name
+
 
 
 issue:
