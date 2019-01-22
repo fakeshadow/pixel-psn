@@ -81,6 +81,25 @@ exports.getTrophies = (req, res) => {
 		})
 }
 
+exports.getIndividualGame = (req, res) => {
+	const fields = {
+		'fields': '@default,trophyRare,trophyEarnedRate',
+		'npLanguage': 'en',
+		'comparedUser': req.params.onlineId
+	}
+	fetch(`${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + querystring.stringify(fields),
+		{
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${accessToken}`
+			},
+			redirect: 'follow',
+		})
+		.then(response => response.json())
+		.then(trp => res.json(trp))
+		.catch(err => res.send(err));
+}
+
 // currently very slow. Need to find a work around.
 exports.getAllTrophies = (req, res) => {
 	let start = 1;
@@ -112,7 +131,6 @@ exports.getAllTrophies = (req, res) => {
 				}
 			}
 		})
-		.then()
 		.then(async () => {
 			const lists = Trophylist.fetchAllList();
 			for (let l of lists) {
@@ -120,10 +138,8 @@ exports.getAllTrophies = (req, res) => {
 				await getIndividualGame(l.npCommunicationId, req.params.onlineId)
 					.then(res => res.json())
 					.then(res => Trophylist.saveDetail(res))
-					.then(() => console.log(test))
 			}
 		})
-		.then(() => res.json(test))
 		.catch(err => console.log(err));
 }
 

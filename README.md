@@ -17,14 +17,19 @@ npm 6.4.1
 login                               
 /login/your_uuid/your_2FA
 
-get user profile                                 
+get profile                                 
 /profile/user_psn_id
 
-get user trophy summary
+get trophy summary
 /trophy/start_number/limit_number/user_psn_id
 
-get all trophies of a user
+get trophy by game
+/trophies/getgame/user_psn_id/game_npId
+
+get all trophies
 /trophies/getall/user_psn_id/wait_time     
+
+
 
 
 *wait_time is in milliseconds. It's there to prevent throtting your PSN API acess.

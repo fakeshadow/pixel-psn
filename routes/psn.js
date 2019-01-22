@@ -8,7 +8,10 @@ const router = express.Router();
 router.get('/test/stats', psnController.getStatus);
 
 
-router.get('/trophies/result', psnController.checkAllTrophies)
+router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame)
+
+router.get('/trophies/result', psnController.checkAllTrophies);
+
 router.get('/trophies/getall/:onlineId/:waitTime', psnController.getAllTrophies);
 
 router.get('/trophy/:start/:limit/:onlineId', psnController.getTrophies);
