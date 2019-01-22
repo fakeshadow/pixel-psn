@@ -1,5 +1,5 @@
 #Requirement(tested):
-nodejs vv10.14.2
+nodejs 10.14.2
 npm 6.4.1
 
 #Setup:
