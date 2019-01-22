@@ -4,12 +4,15 @@ const psnController = require('../controllers/psn');
 
 const router = express.Router();
 
-//router.get('/test', psnController.testSave);
+// test endpoint
+router.get('/test/stats', psnController.getStatus);
+
+
+router.get('/trophies/:start/:limit/:onlineId', psnController.getTrophies);
 
 router.get('/profile/:onlineId', psnController.getProfile);
 
-router.get('/:uuid/:tfa', psnController.login);
-
+router.get('/login/:uuid/:tfa', psnController.login);
 
 
 module.exports = router;

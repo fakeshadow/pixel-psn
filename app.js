@@ -3,8 +3,10 @@ const morgan = require('morgan');
 const cors = require('cors');
 
 const psnRouter = require ('./routes/psn');
-const errorController = require('./controllers/error');
 
+const schedule = require('./util/schedule');
+
+const errorController = require('./controllers/error');
 const psnController = require('./controllers/psn');
 
 require('dotenv').config();
@@ -18,7 +20,8 @@ app.use(psnRouter);
 
 app.use(errorController.get404);
 
-psnController.checkCert();
+psnController.checkToken();
+schedule.scheduleJob();
 
 
 app.listen(process.env.PORT || 3000, () => console.log('Listening on port: ', process.env.PORT || 3000));

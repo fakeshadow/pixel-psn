@@ -9,38 +9,35 @@ require('dotenv').config();
 
 let accessToken;
 let refreshToken;
-let expiresIn;
 
-exports.login = (req, res, next) => {
+exports.login = (req, res) => {
 	getNpsso(req.params.uuid, req.params.tfa)
-		.then(response => response.json())
-		.then(json => {
-			return getGrant(json.npsso)
+		.then(res => res.json())
+		.then(npsso => {
+			return getGrant(npsso.npsso)
 		})
 		.then(res => {
 			return res.headers.get('x-np-grant-code');
 		})
 		.then(code => {
-			return getToken(code)
+			return getToken(code);
 		})
 		.then(res => res.json())
-		.then(json => {
-			accessToken = json.access_token;
-			refreshToken = json.refresh_token;
-			expiresIn = json.expires_in;
-
+		.then(token => {
+			accessToken = token.access_token;
+			refreshToken = token.refresh_token;
 			//todo: need to store timestamp and not overwrite existing tokens
-			const cert = new Cert(accessToken, refreshToken, expiresIn);   
-			console.log(cert);
+			const cert = new Cert(refreshToken);
 			return cert.save();
 		})
 		.then(() => {
 			res.send('Logged in')
 		})
 		.catch(err => res.send(err));
+
 }
 
-exports.getProfile = (req, res, next) => {
+exports.getProfile = (req, res) => {
 	const fields = '/profile?fields=%40default,relation,requestMessageFlag,presence,%40personalDetail,trophySummary'
 	fetch(`${process.env.USERS_API}${req.params.onlineId}${fields}`,
 		{
@@ -59,19 +56,87 @@ exports.getProfile = (req, res, next) => {
 		})
 }
 
-exports.checkCert = () => {
+// Return only sammary. hard code some params for now. Will change it to post and use body to send params. 
+exports.getTrophies = (req, res) => {
+	const fields = {
+		'fields': '@default',
+		'npLanguage': 'en',
+		'iconSize': 'm',
+		'platform': 'PS3,PSVITA,PS4',
+		'offset': req.params.start,
+		'limit': req.params.limit,
+		'comparedUser': req.params.onlineId
+	}
+	fetch(`${process.env.USER_TROPHY_API}?` + querystring.stringify(fields),
+		{
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${accessToken}`
+			},
+			redirect: 'follow',
+		})
+		.then(res => res.json())
+		.then(trp => {
+			res.json(trp);
+		})
+}
+
+// check token when service start
+exports.checkToken = () => {
 	const cert = new Cert;
 	cert.getCert(cert => {
-		//todo: need to check timestamp
-		if (cert && cert.expiresIn > 100) {
-			accessToken = cert.accessToken;
+		console.log(cert);
+		if (cert.refreshToken) {
 			refreshToken = cert.refreshToken;
-			expiresIn = cert.expiresIn;
+			getaccessToken()
+				.then(res => res.json())
+				.then(token => {
+					accessToken = token.access_token;
+					refreshToken = token.refresh_token;
+				})
+			return true;
 		} else {
-			console.log('Please refresh token!');
+			return false;
 		}
 	})
 }
+
+//refresh access token hourly
+exports.getTokenScheduled = () => {
+	return getaccessToken();
+}
+
+// test 
+exports.getStatus = (req, res) => {
+	console.log(accessToken);
+	res.send(accessToken + refreshToken);
+}
+
+
+exports.getGames = (req, res) => {
+
+}
+
+
+getaccessToken = () => {
+	return fetch(`${process.env.AUTH_API}oauth/token`,
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			body: qs.stringify({
+				app_context: 'inapp_ios',
+				client_id: process.env.CLIENT_ID,
+				client_secret: process.env.CLIENT_SECRET,
+				refresh_token: refreshToken,
+				duid: process.env.DUID,
+				scope: process.env.SCOPE,
+				grant_type: 'refresh_token'
+			})
+		})
+}
+
 
 getToken = grantcode => {
 	return fetch(`${process.env.AUTH_API}oauth/token`,
@@ -125,16 +190,4 @@ getNpsso = (uuid, tfa) => {
 				code: tfa
 			})
 		})
-}
-
-getExpireIn = () => {
-	return expiresIn;
-}
-
-getRefreshToken = () => {
-	return refreshToken;
-}
-
-getAccessToken = () => {
-	return accessToken;
 }
