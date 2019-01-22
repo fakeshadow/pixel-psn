@@ -20,7 +20,10 @@ app.use(psnRouter);
 
 app.use(errorController.get404);
 
+//get tokens on service start
 psnController.checkToken();
+
+//schedule jobs like refresh tokens
 schedule.scheduleJob();
 
 

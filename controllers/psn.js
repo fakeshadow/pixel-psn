@@ -3,7 +3,8 @@ const qs = require('qs');
 const querystring = require('querystring');
 
 const Cert = require('../models/psn/certs');
-const Profile = require('../models/psn/profiles');
+const Profile = require('../models/psn/users/profiles');
+const Trophylist = require('../models/psn/users/trophylist');
 
 require('dotenv').config();
 
@@ -26,7 +27,6 @@ exports.login = (req, res) => {
 		.then(token => {
 			accessToken = token.access_token;
 			refreshToken = token.refresh_token;
-			//todo: need to store timestamp and not overwrite existing tokens
 			const cert = new Cert(refreshToken);
 			return cert.save();
 		})
@@ -37,6 +37,7 @@ exports.login = (req, res) => {
 
 }
 
+// need to work out the fields
 exports.getProfile = (req, res) => {
 	const fields = '/profile?fields=%40default,relation,requestMessageFlag,presence,%40personalDetail,trophySummary'
 	fetch(`${process.env.USERS_API}${req.params.onlineId}${fields}`,
@@ -49,14 +50,13 @@ exports.getProfile = (req, res) => {
 		})
 		.then(res => res.json())
 		.then(pro => {
-			console.log(pro);
-			const profile = new Profile(pro.onlineId, pro.avatarUrl, pro.aboutMe, pro.trophySummary);
+			const profile = new Profile(pro.onlineId, pro.npId, pro.avatarUrl, pro.aboutMe, pro.plus, pro.trophySummary);
 			profile.save();
 			res.json(pro);
 		})
 }
 
-// Return only sammary. hard code some params for now. Will change it to post and use body to send params. 
+// Return only summary. hard code some params for now. Will change it to post and use body to send params. 
 exports.getTrophies = (req, res) => {
 	const fields = {
 		'fields': '@default',
@@ -81,9 +81,61 @@ exports.getTrophies = (req, res) => {
 		})
 }
 
+// currently very slow. Need to find a work around.
+exports.getAllTrophies = (req, res) => {
+	let start = 1;
+	let count;
+	let test = [];
+	getSummary(start, req.params.onlineId)
+		.then(res => res.json())
+		.then(summary => {
+			res.send('Request is sent. Please check result later with /trophies/result')
+			count = summary.totalResults;
+			summary.trophyTitles.map(list => {
+				const trophylist = new Trophylist(list.npCommunicationId, list.comparedUser);
+				return trophylist.save();
+			})
+		})
+		.then(async () => {
+			if (count <= 100) {
+				return;
+			} else {
+				while (start <= count) {
+					start += 100;
+					await getSummary(start, req.params.onlineId)
+						.then(res => res.json())
+						.then(summary => {
+							summary.trophyTitles.map(list => {
+								const trophylist = new Trophylist(list.npCommunicationId, list.comparedUser);
+								return trophylist.save();
+							})
+						})
+				}
+			}
+		})
+		.then()
+		.then(async () => {
+			const lists = Trophylist.fetchAll();
+			for (let l of lists) {
+				await wait(req.waitTime);
+				await getIndividualGame(l.npCommunicationId, req.params.onlineId)
+					.then(res => res.json())
+					.then(res => Trophylist.final(res))
+					.then(() => console.log(test))
+			}
+		})
+		.then(() => res.json(test))
+		.catch(err => console.log(err));
+}
+
+exports.checkAllTrophies = (req, res) => {
+	Trophylist.fetchFinal(result => res.json(result));
+}
+
+
 // check token when service start
 exports.checkToken = () => {
-	const cert = new Cert;
+	const cert = new Cert();
 	cert.getCert(cert => {
 		console.log(cert);
 		if (cert.refreshToken) {
@@ -108,8 +160,7 @@ exports.getTokenScheduled = () => {
 
 // test 
 exports.getStatus = (req, res) => {
-	console.log(accessToken);
-	res.send(accessToken + refreshToken);
+	Profile.fetchAll(pro => res.send(pro))
 }
 
 
@@ -118,6 +169,52 @@ exports.getGames = (req, res) => {
 }
 
 
+
+// trophy stuff
+getSummary = (offset, comparedUser) => {
+	const fields = {
+		'fields': '@default',
+		'npLanguage': 'en',
+		'iconSize': 'm',
+		'platform': 'PS3,PSVITA,PS4',
+		'offset': offset,
+		'limit': 100,
+		'comparedUser': comparedUser
+	}
+	return fetch(`${process.env.USER_TROPHY_API}?` + querystring.stringify(fields),
+		{
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${accessToken}`
+			},
+			redirect: 'follow',
+		})
+}
+
+async function getIndividualGame(npCommunicationId, comparedUser) {
+	const fields = {
+		'fields': '@default,trophyRare,trophyEarnedRate',
+		'npLanguage': 'en',
+		'comparedUser': comparedUser
+	}
+	return fetch(`${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + querystring.stringify(fields),
+		{
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${accessToken}`
+			},
+			redirect: 'follow',
+		})
+}
+
+// rate control,need tuning for better result
+wait = ms => {
+	return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+
+
+// Certification stuff
 getaccessToken = () => {
 	return fetch(`${process.env.AUTH_API}oauth/token`,
 		{
