@@ -15,19 +15,19 @@ npm 6.4.1
 *check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
 
 login                               
-/login/<your_uuid>/<your_2FA> 
+/login/your_uuid/your_2FA
 
 get user profile                                 
-/profile/<user_psn_id>
+/profile/user_psn_id
 
 get user trophy summary
-/trophies/<start_number>/<limit_number>/<user_psn_id>
+/trophy/start_number/limit_number/user_psn_id
 
 get all trophies of a user
-/trophies/getall/<user_psn_id>/<wait_time>     
+/trophies/getall/user_psn_id/wait_time     
 
 
-*<wait_time> is in milliseconds. It's there to prevent throtting your PSN API acess.
+*wait_time is in milliseconds. It's there to prevent throtting your PSN API acess.
 
 
 #issue:

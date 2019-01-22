@@ -1,5 +1,5 @@
 const trophylist = [];
-const finaldata = [];
+const trophydetail = [];
 
 module.exports = class Trophylist {
     constructor(npCommunicationId, comparedUser) {
@@ -11,15 +11,15 @@ module.exports = class Trophylist {
         trophylist.push(this);
     }
 
-    static fetchAll() {
+    static fetchAllList() {
         return trophylist;
     }
 
-    static final(data) {
-        finaldata.push(data);
+    static saveDetail(data) {
+        trophydetail.push(data);
     }
 
-    static fetchFinal(callback) {
-        callback(finaldata);
+    static fetchAllDetail(callback) {
+        callback(trophydetail);
     }
 }

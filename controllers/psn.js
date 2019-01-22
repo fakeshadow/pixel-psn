@@ -85,7 +85,6 @@ exports.getTrophies = (req, res) => {
 exports.getAllTrophies = (req, res) => {
 	let start = 1;
 	let count;
-	let test = [];
 	getSummary(start, req.params.onlineId)
 		.then(res => res.json())
 		.then(summary => {
@@ -115,12 +114,12 @@ exports.getAllTrophies = (req, res) => {
 		})
 		.then()
 		.then(async () => {
-			const lists = Trophylist.fetchAll();
+			const lists = Trophylist.fetchAllList();
 			for (let l of lists) {
-				await wait(req.waitTime);
+				await wait(req.params.waitTime);
 				await getIndividualGame(l.npCommunicationId, req.params.onlineId)
 					.then(res => res.json())
-					.then(res => Trophylist.final(res))
+					.then(res => Trophylist.saveDetail(res))
 					.then(() => console.log(test))
 			}
 		})
@@ -129,7 +128,7 @@ exports.getAllTrophies = (req, res) => {
 }
 
 exports.checkAllTrophies = (req, res) => {
-	Trophylist.fetchFinal(result => res.json(result));
+	Trophylist.fetchAllDetail(result => res.json(result));
 }
 
 
@@ -160,7 +159,7 @@ exports.getTokenScheduled = () => {
 
 // test 
 exports.getStatus = (req, res) => {
-	Profile.fetchAll(pro => res.send(pro))
+	Profile.fetchAllList(pro => res.send(pro))
 }
 
 
