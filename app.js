@@ -14,7 +14,7 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('tiny'));
 app.use(cors());
 

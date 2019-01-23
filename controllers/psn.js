@@ -1,11 +1,10 @@
 // at least 2 denpendcies are duplicated, better get rid of them later.
 const fetch = require('node-fetch');
-const request = require('superagent');
+const request = require('request');
 
 const qs = require('qs');
 const querystring = require('querystring');
 const formData = require('form-data');
-
 
 const Cert = require('../models/psn/certs');
 const Profile = require('../models/psn/users/profiles');
@@ -153,28 +152,36 @@ exports.checkAllTrophies = (req, res) => {
 	Trophylist.fetchAllDetail(result => res.json(result));
 }
 
-// social stuff
-exports.formThread = (req, res) => {
+// generate a new thread
+newformThread = (onlineId, myId) => {
 	const body = {
 		"threadDetail": {
 			"threadMembers": [
-				{ "onlineId": req.body.id },
-				{ "onlineId": myId }
+				{ "onlineId": myId },
+				{ "onlineId": onlineId }
 			]
 		}
-	};	
-	request.post(`${process.env.MESSAGE_THREAD_API}threads/`)
-		.http2()
-		//.accept('application/json')
-		.field('threadDetail', JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' })
-		.set('Authorization', `Bearer ${accessToken}`)
-		.then(response => {
-			res.send(response)
-		})
-		.catch(err => {
-			console.log(err)
-			res.send(err)
-		});
+	}
+	// ugly codes. node-fetch seems can't handle custom multipart headers.
+	const form = new formData();
+	form.append('threadDetail', JSON.stringify(body), {contentType: 'application/json; charset=utf-8'});
+	console.log(form);
+	request.post({
+		url: `${process.env.MESSAGE_THREAD_API}threads/`,
+		auth: {
+			'bearer': `${accessToken}`
+		},
+		headers: {
+			'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
+		},
+		body: form
+	}, (err, response, body) => {
+		if (err) {
+			return err;
+		}
+		console.log(body);
+		return res(body);
+	})
 }
 
 // send message
