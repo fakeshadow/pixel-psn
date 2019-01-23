@@ -7,8 +7,9 @@ const router = express.Router();
 // test endpoint
 router.get('/test/stats', psnController.getStatus);
 
+router.post('/message/send', psnController.formThread);
 
-router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame)
+router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame);
 
 router.get('/trophies/result', psnController.checkAllTrophies);
 

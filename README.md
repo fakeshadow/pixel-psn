@@ -17,31 +17,43 @@ npm 6.4.1
 *check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
 
 login 
-> /login/your_uuid/your_2FA
+> GET /login/your_uuid/your_2FA
 
 get profile                                 
-> /profile/user_psn_id
+> GET /profile/user_psn_id
 
 get trophy summary
-> /trophy/start_number/limit_number/user_psn_id
+> GET /trophy/start_number/limit_number/user_psn_id
 
 get trophy by game
-> /trophies/getgame/user_psn_id/game_npId
+> GET /trophies/getgame/user_psn_id/game_npId
 
 get all trophies
-> /trophies/getall/user_psn_id/wait_time     
+> GET /trophies/getall/user_psn_id/wait_time     
+> *wait_time is in milliseconds. It's there to prevent throtting your PSN API acess. It's safe to set it above 1000 or even higher if you have multiple request at the same time.
 
-*wait_time is in milliseconds. It's there to prevent throtting your PSN API acess.
+send message
+> POST /message/send/
 
 
 ### issue:
 
-your refresh token is stored in cert/tokens.json. It's safe to disable cert.save() function
-if you don't feel like to store it;
+JS is async by nature so it's very easy to throttle your PSN API by accident. Be ware that happen and restart the app when you are at it.
 
-Poor error handling;
+Your refresh token is stored in cert/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
 
-process may halt when auto refreshing token;
+Refresh token may expire and you have to login again manually.
 
-messy code;
+Poor error handling. Please start an issue if you can't figure out the problem.
+
+Process may halt when auto refreshing token.
+
+Messy code.
+
+
+### todo:
+> fully function social features.
+> databse support.
+> blockchain implement.
+
 

@@ -1,6 +1,11 @@
+// at least 2 denpendcies are duplicated, better get rid of them later.
 const fetch = require('node-fetch');
+const request = require('superagent');
+
 const qs = require('qs');
 const querystring = require('querystring');
+const formData = require('form-data');
+
 
 const Cert = require('../models/psn/certs');
 const Profile = require('../models/psn/users/profiles');
@@ -10,6 +15,7 @@ require('dotenv').config();
 
 let accessToken;
 let refreshToken;
+let myId;
 
 exports.login = (req, res) => {
 	getNpsso(req.params.uuid, req.params.tfa)
@@ -147,23 +153,44 @@ exports.checkAllTrophies = (req, res) => {
 	Trophylist.fetchAllDetail(result => res.json(result));
 }
 
+// social stuff
+exports.formThread = (req, res) => {
+	const body = {
+		"threadDetail": {
+			"threadMembers": [
+				{ "onlineId": req.body.id },
+				{ "onlineId": myId }
+			]
+		}
+	};	
+	request.post(`${process.env.MESSAGE_THREAD_API}threads/`)
+		.http2()
+		//.accept('application/json')
+		.field('threadDetail', JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' })
+		.set('Authorization', `Bearer ${accessToken}`)
+		.then(response => {
+			res.send(response)
+		})
+		.catch(err => {
+			console.log(err)
+			res.send(err)
+		});
+}
+
+// send message
+
+
+
 
 // check token when service start
-exports.checkToken = () => {
+exports.checkToken = (callback) => {
 	const cert = new Cert();
 	cert.getCert(cert => {
 		console.log(cert);
 		if (cert.refreshToken) {
 			refreshToken = cert.refreshToken;
-			getaccessToken()
-				.then(res => res.json())
-				.then(token => {
-					accessToken = token.access_token;
-					refreshToken = token.refresh_token;
-				})
-			return true;
-		} else {
-			return false;
+			getaccessToken();
+			callback(true);
 		}
 	})
 }
@@ -175,7 +202,7 @@ exports.getTokenScheduled = () => {
 
 // test 
 exports.getStatus = (req, res) => {
-	Profile.fetchAllList(pro => res.send(pro))
+	res.send(accessToken);
 }
 
 
@@ -227,11 +254,9 @@ wait = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-
-
 // Certification stuff
 getaccessToken = () => {
-	return fetch(`${process.env.AUTH_API}oauth/token`,
+	fetch(`${process.env.AUTH_API}oauth/token`,
 		{
 			method: 'POST',
 			headers: {
@@ -247,8 +272,13 @@ getaccessToken = () => {
 				grant_type: 'refresh_token'
 			})
 		})
+		.then(res => res.json())
+		.then(token => {
+			accessToken = token.access_token;
+			return refreshToken = token.refresh_token;
+		})
+		.catch(err => res.send(err))
 }
-
 
 getToken = grantcode => {
 	return fetch(`${process.env.AUTH_API}oauth/token`,
