@@ -7,11 +7,14 @@ const psnMessageController = require('../controllers/psn/message');
 const router = express.Router();
 
 // test endpoint//
-//router.post('/test/', psnMessageController.sendText);
-router.get('/test/stats', psnTokenController.getStatus);
+router.get('/test/stats/', psnTokenController.getStatus);
 
 
 // working
+router.get('/message/new', psnMessageController.getThreadsModifiedDate)
+
+router.post('/message/find', psnMessageController.crossFindId)
+
 router.post('/message/send', psnMessageController.sendMessage); 
 
 router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame);
