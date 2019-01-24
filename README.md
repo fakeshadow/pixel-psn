@@ -16,28 +16,32 @@ npm 6.4.1
 
 *check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
 
-####login 
+#### login 
 > GET /login/your_uuid/your_2FA
 
-####get profile                                 
+#### get profile                                 
 > GET /profile/user_psn_id
 
-####get trophy summary
+#### get trophy summary
 > GET /trophy/start_number/limit_number/user_psn_id
 
-####get trophy by game
+#### get trophy by game
 > GET /trophies/getgame/user_psn_id/game_npId
 
-####get all trophies
+#### get all trophies
 > GET /trophies/getall/user_psn_id/wait_time     
 > *wait_time is in milliseconds. It's there to prevent throtting your PSN API acess. It's safe to set it above 1000 or even higher if you have multiple request at the same time.
 
-####send message
+#### send message
 > POST /message/send/
 > *accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+>
 > Required keys and values:  
+>
 > 'threadId': 'The threadId you want to post message to'
+>
 > 'message': 'The text content of your message'
+>
 > 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  *only type 1 support for now.
 
 ### issue:
