@@ -10,24 +10,23 @@ const router = express.Router();
 router.get('/test/stats/', psnTokenController.getStatus);
 
 
-// working
-router.get('/message/new', psnMessageController.getThreadsModifiedDate)
+// message related
+router.get('/message/new', psnMessageController.getThreadsModifiedDate);
+router.post('/message/find', psnMessageController.crossFindId);
+router.post('/message/send', psnMessageController.sendMessage);
+router.post('/message/receive', psnMessageController.getThreadMessages);
 
-router.post('/message/find', psnMessageController.crossFindId)
 
-router.post('/message/send', psnMessageController.sendMessage); 
-
+// trophy retated
 router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame);
-
 router.get('/trophies/result', psnController.checkAllTrophies);
-
 router.get('/trophies/getall/:onlineId/:waitTime', psnController.getAllTrophies);
-
 router.get('/trophy/:start/:limit/:onlineId', psnController.getTrophies);
 
-router.get('/profile/:onlineId', psnController.getProfile);
 
-router.get('/login/:uuid/:tfa', psnTokenController.login);
+// profie and autnetication
+router.get('/profile/:onlineId', psnController.getProfile);
+router.post('/login', psnTokenController.login);
 
 
 module.exports = router;

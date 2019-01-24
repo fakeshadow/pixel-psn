@@ -21,8 +21,16 @@ exports.crossFindId = (req, res) => {
 	} else {
 		res.json('error: wrong request');
 	}
-} 
+}
 
+exports.getThreadMessages = (req, res) => {
+	if (req.body.count > 100) {
+		return res.json('error: please reduce count')
+	}
+	detailThread(req.body.threadId, req.body.count)
+		.then(thread => res.json(thread))
+		.catch(err => res.json(err));
+}
 
 //send message(only text message support)
 exports.sendMessage = (req, res) => {
@@ -37,12 +45,11 @@ exports.sendMessage = (req, res) => {
 	})
 }
 
-
 //get all threads with major detail, used for schedule update
 exports.getAllThreades = callback => {
 	oldThreads()
 		.then(threads => threads.map(thread => ({ 'threadId': thread.threadId })))
-		.then(async(threadIds) => {
+		.then(async (threadIds) => {
 			ThreadDetail.clear();
 			for (let id of threadIds) {
 				const detail = await detailThread(id.threadId, 1); //count could be adjusted. 
@@ -52,7 +59,7 @@ exports.getAllThreades = callback => {
 			console.log(ThreadDetail.getAllDetails());
 			callback();
 		})
-		.catch(err => callback(err));	
+		.catch(err => callback(err));
 }
 
 // message stuff
@@ -85,6 +92,34 @@ sendText = (threadId, text, accessToken, callback) => {
 	})
 }
 
+// image only passthrough and not stored
+sendImage = (threadId, text, acceToken, callback) => {
+	const body = {
+		"messageEventDetail": {
+			"eventCategoryCode": 1,
+			"messageDetail": {
+				"body": text
+			}
+		}
+	}
+	const form = new formData();
+	form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
+	return request.post({
+		url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
+		auth: {
+			'bearer': `${accessToken}`
+		},
+		headers: {
+			'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
+		},
+		body: form
+	}, (err, response, body) => {
+		if (err) {
+			callback(err);
+		}
+		callback(body);
+	})
+}
 
 // thread stuff
 // generate a new thread

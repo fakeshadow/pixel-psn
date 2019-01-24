@@ -16,27 +16,41 @@ npm 6.4.1
 
 *check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
 
+
 #### login 
-> GET   /login/your_uuid/your_2FA
+> POST   /login
+>
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+>
+> Required keys and values:  
+>
+> 'uuId': 'The uuId you get from above tutorial'
+>
+> 'twoFA': 'as above'
+
 
 #### get profile                                 
 > GET   /profile/user_psn_id
 
+
 #### get trophy summary
 > GET   /trophy/start_number/limit_number/user_psn_id
+
 
 #### get trophy by game
 > GET   /trophies/getgame/user_psn_id/game_npId
 
+
 #### get all trophies
 > GET   /trophies/getall/user_psn_id/wait_time
 >     
-> *wait_time is in milliseconds. It's there to prevent throtting your PSN API acess. It's safe to set it above 1000 or even higher if you have multiple request at the same time.
+> * wait_time is in milliseconds. It's there to prevent throtting your PSN API acess. It's safe to set it above 1000 or even higher if you have multiple request at the same time.
+
 
 #### send message
 > POST  /message/send/
 >
-> *accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
 >
 > Required keys and values:  
 >
@@ -46,15 +60,28 @@ npm 6.4.1
 >
 > 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  *only type 1 support for now.
 
+#### recieve messages
+>POST   /message/receive
+>
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+>
+> Required keys and values:  
+>
+> 'threadId': 'The threadId you want to get messages from'
+>
+> 'count': 'The count of messages you want to receive' (limit is set to 100)
+
+
 #### check message
 >GET    /message/new
 >
 >auto update threads lastmodified date per minute.
 
+
 #### cross find thread or people
 >POST   /message/find
 >
-> *accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
 >
 > Accept keys and values(*Doesn't accept both):  
 >

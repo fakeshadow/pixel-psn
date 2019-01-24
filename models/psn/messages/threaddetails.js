@@ -27,7 +27,6 @@ module.exports = class ThreadDetail {
         return threadDetails.map(thread => ({ 'threadId': thread.threadId, 'threadModifiedDate': thread.threadModifiedDate }))
     }
 
-    
 
     static getAllDetails() {
         return threadDetails;

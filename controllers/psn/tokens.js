@@ -11,7 +11,7 @@ const p = path.join(path.dirname(process.mainModule.filename), 'token', `token.j
 let accessToken;
 
 exports.login = (req, res) => {
-    getNpsso(req.params.uuid, req.params.tfa)
+    getNpsso(req.body.uuId, req.body.twoFA)
         .then(res => res.json())
         .then(npsso => {
             return getGrant(npsso.npsso)
