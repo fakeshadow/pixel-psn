@@ -1,49 +1,17 @@
 // at least 2 denpendcies are duplicated, better get rid of them later.
 const fetch = require('node-fetch');
-const request = require('request');
-
-const qs = require('qs');
 const querystring = require('querystring');
-const formData = require('form-data');
 
-const Cert = require('../models/psn/certs');
+const token = require('./psn/tokens');
 const Profile = require('../models/psn/users/profiles');
 const Trophylist = require('../models/psn/users/trophylist');
 
 require('dotenv').config();
 
-let accessToken;
-let refreshToken;
-let myId;
-
-exports.login = (req, res) => {
-	getNpsso(req.params.uuid, req.params.tfa)
-		.then(res => res.json())
-		.then(npsso => {
-			return getGrant(npsso.npsso)
-		})
-		.then(res => {
-			return res.headers.get('x-np-grant-code');
-		})
-		.then(code => {
-			return getToken(code);
-		})
-		.then(res => res.json())
-		.then(token => {
-			accessToken = token.access_token;
-			refreshToken = token.refresh_token;
-			const cert = new Cert(refreshToken);
-			return cert.save();
-		})
-		.then(() => {
-			res.send('Logged in')
-		})
-		.catch(err => res.send(err));
-
-}
 
 // need to work out the fields
 exports.getProfile = (req, res) => {
+	const accessToken = token.getLocalToken();
 	const fields = '/profile?fields=%40default,relation,requestMessageFlag,presence,%40personalDetail,trophySummary'
 	fetch(`${process.env.USERS_API}${req.params.onlineId}${fields}`,
 		{
@@ -63,6 +31,7 @@ exports.getProfile = (req, res) => {
 
 // Return only summary. hard code some params for now. Will change it to post and use body to send params. 
 exports.getTrophies = (req, res) => {
+	const accessToken = token.getLocalToken();
 	const fields = {
 		'fields': '@default',
 		'npLanguage': 'en',
@@ -87,6 +56,7 @@ exports.getTrophies = (req, res) => {
 }
 
 exports.getIndividualGame = (req, res) => {
+	const accessToken = token.getLocalToken();
 	const fields = {
 		'fields': '@default,trophyRare,trophyEarnedRate',
 		'npLanguage': 'en',
@@ -152,75 +122,10 @@ exports.checkAllTrophies = (req, res) => {
 	Trophylist.fetchAllDetail(result => res.json(result));
 }
 
-// generate a new thread
-newformThread = (onlineId, myId) => {
-	const body = {
-		"threadDetail": {
-			"threadMembers": [
-				{ "onlineId": myId },
-				{ "onlineId": onlineId }
-			]
-		}
-	}
-	// ugly codes. node-fetch seems can't handle custom multipart headers.
-	const form = new formData();
-	form.append('threadDetail', JSON.stringify(body), {contentType: 'application/json; charset=utf-8'});
-	console.log(form);
-	request.post({
-		url: `${process.env.MESSAGE_THREAD_API}threads/`,
-		auth: {
-			'bearer': `${accessToken}`
-		},
-		headers: {
-			'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
-		},
-		body: form
-	}, (err, response, body) => {
-		if (err) {
-			return err;
-		}
-		console.log(body);
-		return res(body);
-	})
-}
-
-// send message
-
-
-
-
-// check token when service start
-exports.checkToken = (callback) => {
-	const cert = new Cert();
-	cert.getCert(cert => {
-		console.log(cert);
-		if (cert.refreshToken) {
-			refreshToken = cert.refreshToken;
-			getaccessToken();
-			callback(true);
-		}
-	})
-}
-
-//refresh access token hourly
-exports.getTokenScheduled = () => {
-	return getaccessToken();
-}
-
-// test 
-exports.getStatus = (req, res) => {
-	res.send(accessToken);
-}
-
-
-exports.getGames = (req, res) => {
-
-}
-
-
 
 // trophy stuff
 getSummary = (offset, comparedUser) => {
+	const accessToken = token.getLocalToken();
 	const fields = {
 		'fields': '@default',
 		'npLanguage': 'en',
@@ -241,6 +146,7 @@ getSummary = (offset, comparedUser) => {
 }
 
 async function getIndividualGame(npCommunicationId, comparedUser) {
+	const accessToken = token.getLocalToken();
 	const fields = {
 		'fields': '@default,trophyRare,trophyEarnedRate',
 		'npLanguage': 'en',
@@ -261,82 +167,3 @@ wait = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// Certification stuff
-getaccessToken = () => {
-	fetch(`${process.env.AUTH_API}oauth/token`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: qs.stringify({
-				app_context: 'inapp_ios',
-				client_id: process.env.CLIENT_ID,
-				client_secret: process.env.CLIENT_SECRET,
-				refresh_token: refreshToken,
-				duid: process.env.DUID,
-				scope: process.env.SCOPE,
-				grant_type: 'refresh_token'
-			})
-		})
-		.then(res => res.json())
-		.then(token => {
-			accessToken = token.access_token;
-			return refreshToken = token.refresh_token;
-		})
-		.catch(err => res.send(err))
-}
-
-getToken = grantcode => {
-	return fetch(`${process.env.AUTH_API}oauth/token`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: qs.stringify({
-				client_id: process.env.CLIENT_ID,
-				client_secret: process.env.CLIENT_SECRET,
-				duid: process.env.DUID,
-				scope: process.env.SCOPE,
-				code: grantcode,
-				grant_type: 'authorization_code'
-			})
-		})
-}
-
-getGrant = npsso => {
-	const code_request = {
-		"duid": process.env.DUID,
-		"app_context": "inapp_ios",
-		"client_id": process.env.CLIENT_ID,
-		"scope": process.env.SCOPE,
-		"response_type": "code",
-	}
-
-	return fetch(`${process.env.AUTH_API}oauth/authorize?` + querystring.stringify(code_request),
-		{
-			method: 'GET',
-			headers: {
-				'Cookie': `npsso=${npsso}`
-			},
-			redirect: 'manual',
-			follow: 1
-		})
-}
-
-getNpsso = (uuid, tfa) => {
-	return fetch(`${process.env.AUTH_API}ssocookie`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: qs.stringify({
-				authentication_type: 'two_step',
-				client_id: process.env.CLIENT_ID,
-				ticket_uuid: uuid,
-				code: tfa
-			})
-		})
-}

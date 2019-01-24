@@ -1,9 +1,9 @@
 const schedule = require('node-schedule');
-const psnController = require('../controllers/psn');
+const psnTokenController = require('../controllers/psn/tokens');
 
 schedule.scheduleJob('33 2 * * * *', () => {
     console.log('Refresh accessToken!');
-    psnController.getTokenScheduled();
+    psnTokenController.getTokenScheduled();
 })
 
 schedule.scheduleJob('0 18 9  * * *', () => {

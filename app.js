@@ -8,13 +8,13 @@ const psnRouter = require('./routes/psn');
 const schedule = require('./util/schedule');
 
 const errorController = require('./controllers/error');
-const psnController = require('./controllers/psn');
+const psnTokenController = require('./controllers/psn/tokens');
 
 require('dotenv').config();
 
 const app = express();
 
-// app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('tiny'));
 app.use(cors());
 
@@ -23,7 +23,7 @@ app.use(psnRouter);
 app.use(errorController.get404);
 
 //get tokens on service start
-psnController.checkToken(boolean => {
+psnTokenController.checkToken(boolean => {
     if (boolean) {
         return console.log('Got refresh token')
     } 
