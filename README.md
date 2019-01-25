@@ -50,7 +50,7 @@ npm 6.4.1
 #### send message
 > POST  /message/send/
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept multipart/form-data (set your post header 'Content-Type' to 'application/multipart/form-data')
 >
 > Required keys and values:  
 >
@@ -58,7 +58,12 @@ npm 6.4.1
 >
 > 'message': 'The text content of your message'
 >
-> 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  *only type 1 support for now.
+> 'content': 'put your data here. like image. leave it blank if you only send text message'
+>
+> 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
+>
+> *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
+
 
 #### recieve messages
 >POST   /message/receive
@@ -111,5 +116,7 @@ Messy code.
 > fully function social features.
 > databse support.
 > blockchain implement.
+
+> fork form-data to add custom content-length
 
 

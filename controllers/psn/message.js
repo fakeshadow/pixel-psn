@@ -32,18 +32,38 @@ exports.getThreadMessages = (req, res) => {
 		.catch(err => res.json(err));
 }
 
-//send message(only text message support)
+//send message(only text and image message support)
 exports.sendMessage = (req, res) => {
 	const accessToken = token.getLocalToken();
-	if (req.body.type !== '1') {
-		return res.send('Only text message support right now')
+	if (req.body.type == '1') {
+		// need to import message check to filter dirty words,strings, etc.
+		// need to import threadId check to reject wrong id.
+		sendText(req.body.threadId, req.body.message, accessToken, (err, result) => {
+			if (err) {
+				res.json('error: ',err);
+			}
+			res.json(result);
+		})
+	} else if (req.body.type == '2') {
+		// image size has ridiculous limit. need look into.
+		const content = req.files.image[0].buffer;
+		console.log(content)
+		sendImage(req.body.threadId, req.body.message, content, accessToken, (err, result) => {
+			if (err) {
+				res.json('error: ',err)
+			}
+			res.send(result);
+		})
 	}
-	// need to import message check to filter dirty words,strings, etc.
-	// need to import threadId check to reject wrong id.
-	sendText(req.body.threadId, req.body.message, accessToken, result => {
-		res.send(result);
+}
+
+exports.testSend = (req, res) => {
+	const accessToken = token.getLocalToken();
+	newThread(req.body.onlineId, myId, accessToken, (err, body) => {
+		res.send(body);
 	})
 }
+
 
 //get all threads with major detail, used for schedule update
 exports.getAllThreades = callback => {
@@ -63,18 +83,18 @@ exports.getAllThreades = callback => {
 }
 
 // message stuff
-sendText = (threadId, text, accessToken, callback) => {
+sendText = (threadId, message, accessToken, callback) => {
 	// const accessToken = token.getLocalToken();
 	const body = {
 		"messageEventDetail": {
 			"eventCategoryCode": 1,
 			"messageDetail": {
-				"body": text
+				"body": message
 			}
 		}
 	}
 	const form = new formData();
-	form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
+	form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8', knownLength: form.getLength });
 	return request.post({
 		url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
 		auth: {
@@ -85,51 +105,51 @@ sendText = (threadId, text, accessToken, callback) => {
 		},
 		body: form
 	}, (err, response, body) => {
-		if (err) {
-			callback(err);
-		}
-		callback(body);
+		callback(err, body);
 	})
 }
 
-// image only passthrough and not stored
-sendImage = (threadId, text, acceToken, callback) => {
+sendImage = (threadId, message, image, accessToken, callback) => {
 	const body = {
 		"messageEventDetail": {
-			"eventCategoryCode": 1,
+			"eventCategoryCode": 3,
 			"messageDetail": {
-				"body": text
+				"body": message
 			}
 		}
 	}
 	const form = new formData();
 	form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
+	/* fork or change the form-data in node_modules/form-data/form-data.js
+	 	var header = {
+			'Content-Length': [].concat(contentLength || [])    add this line
+		}*/
+	form.append('imageData', image, { contentType: 'image/png', contentLength: image.length });
 	return request.post({
 		url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
 		auth: {
 			'bearer': `${accessToken}`
 		},
 		headers: {
-			'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
+			'Content-Type': `multipart/form-data; boundary=${form._boundary}`
 		},
-		body: form
+		body: form,
 	}, (err, response, body) => {
-		if (err) {
-			callback(err);
-		}
-		callback(body);
+		callback(err, body)
 	})
+
 }
+
+
 
 // thread stuff
 // generate a new thread
-newThread = (onlineId, myId) => {
-	const accessToken = token.getLocalToken();
+newThread = (onlineId, myId, accessToken, callback) => {
 	const body = {
 		"threadDetail": {
 			"threadMembers": [
-				{ "onlineId": myId },
-				{ "onlineId": onlineId }
+				{ "onlineId": onlineId },
+				{ "onlineId": myId }
 			]
 		}
 	}
@@ -147,11 +167,7 @@ newThread = (onlineId, myId) => {
 		},
 		body: form
 	}, (err, response, body) => {
-		if (err) {
-			return err;
-		}
-		console.log(body);
-		return res.send(body);
+		callback(err, body);
 	})
 }
 

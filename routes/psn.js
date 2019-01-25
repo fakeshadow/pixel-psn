@@ -10,6 +10,10 @@ const router = express.Router();
 router.get('/test/stats/', psnTokenController.getStatus);
 
 
+// testn
+router.post('/message/testsend', psnMessageController.testSend);
+
+
 // message related
 router.get('/message/new', psnMessageController.getThreadsModifiedDate);
 router.post('/message/find', psnMessageController.crossFindId);
