@@ -50,7 +50,7 @@ npm 6.4.1
 #### send message
 > POST  /message/send/
 >
-> * accept multipart/form-data (set your post header 'Content-Type' to 'application/multipart/form-data')
+> * accept multipart/form-data (set your post header 'Content-Type' to 'multipart/form-data')
 >
 > Required keys and values:  
 >
