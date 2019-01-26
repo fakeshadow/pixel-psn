@@ -3,6 +3,7 @@ const express = require('express');
 const psnController = require('../controllers/psn');
 const psnTokenController = require('../controllers/psn/tokens');
 const psnMessageController = require('../controllers/psn/message');
+const psnProfileController = require('../controllers/psn/profile');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/test/stats/', psnTokenController.getStatus);
 
 
 // testn
-//router.post('/message/testsend', psnMessageController.testSend);
+
 
 
 // message related
@@ -20,6 +21,8 @@ router.post('/message/find', psnMessageController.crossFindId);
 router.post('/message/send', psnMessageController.sendMessageToThread);
 router.post('/message/send/direct', psnMessageController.sendMessageToPerson);
 router.post('/message/receive', psnMessageController.getThreadMessages);
+// need to work on auth middleware
+router.post('/message/leave', psnMessageController.leaveThread);
 
 
 // trophy retated
@@ -30,7 +33,7 @@ router.get('/trophy/:start/:limit/:onlineId', psnController.getTrophies);
 
 
 // profie and autnetication
-router.get('/profile/:onlineId', psnController.getProfile);
+router.get('/profile/:onlineId', psnProfileController.getProfile);
 router.post('/login', psnTokenController.login);
 
 

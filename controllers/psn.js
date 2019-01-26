@@ -3,31 +3,10 @@ const fetch = require('node-fetch');
 const querystring = require('querystring');
 
 const token = require('./psn/tokens');
-const Profile = require('../models/psn/users/profiles');
 const Trophylist = require('../models/psn/users/trophylist');
 
 require('dotenv').config();
 
-
-// need to work out the fields
-exports.getProfile = (req, res) => {
-	const accessToken = token.getLocalToken();
-	const fields = '/profile?fields=%40default,relation,requestMessageFlag,presence,%40personalDetail,trophySummary'
-	fetch(`${process.env.USERS_API}${req.params.onlineId}${fields}`,
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
-		})
-		.then(res => res.json())
-		.then(pro => {
-			const profile = new Profile(pro.onlineId, pro.npId, pro.avatarUrl, pro.aboutMe, pro.plus, pro.trophySummary);
-			profile.save();
-			res.json(pro);
-		})
-}
 
 // Return only summary. hard code some params for now. Will change it to post and use body to send params. 
 exports.getTrophies = (req, res) => {

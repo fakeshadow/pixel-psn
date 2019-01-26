@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
+const mongoose = require('mongoose');
 
 const psnRouter = require('./routes/psn');
 
@@ -23,6 +24,7 @@ app.use(multer()
         { name: 'threadId', maxCount: 1 },
         { name: 'message', maxCount: 1 },
         { name: 'content', maxCount: 1 },
+        { name: 'onlineId', maxCount: 1 },
         { name: 'type', maxCount: 1 }
     ]));
 
@@ -42,6 +44,10 @@ psnTokenController.checkToken(boolean => {
 //schedule jobs like refresh tokens
 schedule.scheduleJob();
 
+mongoose
+    .connect(process.env.DATABASE, { useNewUrlParser: true })
+    .then(res => console.log('Database connected'))
+    .catch(err => console.log(err))
 
 app.listen(process.env.PORT || 3000, () => console.log('Listening on port: ', process.env.PORT || 3000));
 

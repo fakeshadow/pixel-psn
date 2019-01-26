@@ -114,6 +114,15 @@ npm 6.4.1
 > 'onlineId': 'find all threads this onlineId is in' (id need to be exact match including uper lower caps and symbos)
 
 
+#### leave a message thread
+>POST   /message/leave
+>
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+>
+> Accept keys and values:  
+>
+> 'threadId': 'leave this message thread'
+
 
 
 ### issue:

@@ -9,7 +9,6 @@ schedule.scheduleJob('33 2 * * * *', () => {
 })
 
 schedule.scheduleJob('1 * * * * *', () => {
-    console.log('Updating threads!');
     psnMessageController
         .getAllThreades()
         .then()

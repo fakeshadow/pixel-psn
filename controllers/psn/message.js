@@ -52,6 +52,20 @@ exports.getThreadMessages = (req, res) => {
 		.catch(err => res.json(err));
 }
 
+exports.leaveThread  = (req, res) => {
+	const accessToken = token.getLocalToken();
+	const threadId = req.body.threadId
+	fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`, 
+	{
+		method: 'DELETE',
+		headers: {
+			'Authorization': `Bearer ${accessToken}`
+		},
+		redirect: 'follow',
+	})
+	.then(() => res.send('Done'))
+	.catch(err => res.send(err))	
+}
 
 exports.sendMessageToThread = (req, res) => {
 	const accessToken = token.getLocalToken();
@@ -68,7 +82,7 @@ exports.sendMessageToPerson = (req, res) => {
 	if (checkId.length > 0) {
 		return res.json('error: already get threads');
 	}
-	newThread(req.body.onlineId, myId, accessToken)
+	newThread(req.body.onlineId, accessToken)
 		.then(threadId => {
 			sendMessage(req, accessToken, threadId)
 				.then(result => res.send(result))
@@ -165,13 +179,13 @@ sendImage = (threadId, message, content, accessToken) => {
 
 // thread stuff
 // generate a new thread
-newThread = (onlineId, myId, accessToken) => {
+newThread = (onlineId, accessToken) => {
 	return new Promise((resolve, reject) => {
 		const body = {
 			"threadDetail": {
 				"threadMembers": [
 					{ "onlineId": onlineId },
-					{ "onlineId": myId }
+					{ "onlineId": process.env.MYID }
 				]
 			}
 		}
@@ -211,26 +225,6 @@ oldThreads = accessToken => {
 			return threads.threads;
 		})
 }
-
-
-
-// //get all existed threads
-// async function oldThreads() {
-// 	const accessToken = token.getLocalToken();
-// 	return await fetch(`${process.env.MESSAGE_THREAD_API}threads/`,
-// 		{
-// 			method: 'GET',
-// 			headers: {
-// 				'Authorization': `Bearer ${accessToken}`
-// 			},
-// 			redirect: 'follow',
-// 		})
-// 		.then(res => res.json())
-// 		.then(threads => {
-// 			return threads.threads;
-// 		})
-// }
-
 
 //get one thread detail
 detailThread = (threadId, count, accessToken) => {
