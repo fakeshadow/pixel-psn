@@ -11,13 +11,14 @@ router.get('/test/stats/', psnTokenController.getStatus);
 
 
 // testn
-router.post('/message/testsend', psnMessageController.testSend);
+//router.post('/message/testsend', psnMessageController.testSend);
 
 
 // message related
 router.get('/message/new', psnMessageController.getThreadsModifiedDate);
 router.post('/message/find', psnMessageController.crossFindId);
-router.post('/message/send', psnMessageController.sendMessage);
+router.post('/message/send', psnMessageController.sendMessageToThread);
+router.post('/message/send/direct', psnMessageController.sendMessageToPerson);
 router.post('/message/receive', psnMessageController.getThreadMessages);
 
 

@@ -48,7 +48,7 @@ npm 6.4.1
 
 
 #### send message
-> POST  /message/send/
+> POST  /message/send
 >
 > * accept multipart/form-data (set your post header 'Content-Type' to 'multipart/form-data')
 >
@@ -58,11 +58,30 @@ npm 6.4.1
 >
 > 'message': 'The text content of your message'
 >
-> 'content': 'put your data here. like image. leave it blank if you only send text message'
+> 'content': 'put your data here. leave it blank if you only send text message'
 >
 > 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
 >
 > *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
+
+#### send message direct to onlineId
+> POST  /message/send/direct
+> 
+> * usually it's not optimal to send message directly. As you may form more threads than you need to and make managing and caching harder.
+> mostly the same as regular send message. Using local memory cache to decide if a new thread need to be found. It may introduce some errors but will save some api calls.
+>
+> Required keys and values:  
+>
+> 'onlineId': 'The onlineId you want to post message to' (id need to be exact match including uper lower caps and symbos)
+>
+> 'message': 'The text content of your message'
+>
+> 'content': 'put your data here. leave it blank if you only send text message'
+>
+> 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
+>
+> *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
+
 
 
 #### recieve messages
@@ -92,7 +111,7 @@ npm 6.4.1
 >
 > 'threadId': 'find all members' Id in that thread'
 >
-> 'onlineId': 'find all threads this onlineId is in'
+> 'onlineId': 'find all threads this onlineId is in' (id need to be exact match including uper lower caps and symbos)
 
 
 

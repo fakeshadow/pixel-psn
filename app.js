@@ -23,7 +23,7 @@ app.use(multer()
         { name: 'threadId', maxCount: 1 },
         { name: 'message', maxCount: 1 },
         { name: 'content', maxCount: 1 },
-        { name: 'type', maxCount: 1}
+        { name: 'type', maxCount: 1 }
     ]));
 
 

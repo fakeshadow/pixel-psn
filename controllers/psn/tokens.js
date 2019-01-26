@@ -25,7 +25,7 @@ exports.login = (req, res) => {
         .then(res => res.json())
         .then(tok => {
             accessToken = tok.access_toke;
-            fs.writeFile(p, JSON.stringify({"token": tok.refresh_token}), err => console.log(err));
+            fs.writeFile(p, JSON.stringify({ "token": tok.refresh_token }), err => console.log(err));
         })
         .then(() => res.send('Logged in'))
         .catch(err => res.send(err));
@@ -34,7 +34,7 @@ exports.login = (req, res) => {
 
 // check token when service start
 exports.checkToken = callback => {
-    getRefreshToken(tok => {
+    getRefreshToken().then(tok => {
         if (tok.token.length) {
             getaccessToken();
             callback(true);
@@ -56,32 +56,34 @@ exports.getStatus = (req, res) => {
 
 // Token stuff
 getaccessToken = () => {
-    getRefreshToken(tok => {
-        fetch(`${process.env.AUTH_API}oauth/token`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: qs.stringify({
-                    app_context: 'inapp_ios',
-                    client_id: process.env.CLIENT_ID,
-                    client_secret: process.env.CLIENT_SECRET,
-                    refresh_token: tok.token,
-                    duid: process.env.DUID,
-                    scope: process.env.SCOPE,
-                    grant_type: 'refresh_token'
+    getRefreshToken()
+        .then(tok => {
+            fetch(`${process.env.AUTH_API}oauth/token`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: qs.stringify({
+                        app_context: 'inapp_ios',
+                        client_id: process.env.CLIENT_ID,
+                        client_secret: process.env.CLIENT_SECRET,
+                        refresh_token: tok.token,
+                        duid: process.env.DUID,
+                        scope: process.env.SCOPE,
+                        grant_type: 'refresh_token'
+                    })
                 })
-            })
-            .then(res => res.json())
-            .then(tok => {
-                accessToken = tok.access_token;
-                fs.readFile(p, (err, file) => {
-                    return fs.writeFile(p, JSON.stringify({"token": tok.refresh_token}), err => console.log(err));
+                .then(res => res.json())
+                .then(tok => {
+                    accessToken = tok.access_token;
+                    fs.readFile(p, (err, file) => {
+                        return fs.writeFile(p, JSON.stringify({ "token": tok.refresh_token }), err => console.log(err));
+                    })
                 })
-            })
-            .catch(err => res.send(err))
-    });
+                .catch(err => console.log(err))
+        })
+        .catch(err => console.log(err))
 }
 
 getToken = grantcode => {
@@ -138,13 +140,15 @@ getNpsso = (uuid, tfa) => {
 }
 
 //local cache
-getRefreshToken = callback => {
-    fs.readFile(p, (err, file) => {
-        if (err || !file.length) {
-            return console.log('Token not found!')
-        }
-        callback(JSON.parse(file));
-    });
+getRefreshToken = () => {
+    return new Promise((resolve, reject) => {
+        fs.readFile(p, (err, file) => {
+            if (err || !file.length) {
+                reject(err);
+            }
+            resolve(JSON.parse(file));
+        });
+    })
 }
 
 exports.getLocalToken = () => {

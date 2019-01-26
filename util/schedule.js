@@ -10,7 +10,10 @@ schedule.scheduleJob('33 2 * * * *', () => {
 
 schedule.scheduleJob('1 * * * * *', () => {
     console.log('Updating threads!');
-    psnMessageController.getAllThreades(() => console.log('Refreshed threadsList!'))
+    psnMessageController
+        .getAllThreades()
+        .then()
+        .catch(err => console.log('Failed to update threads list! ' + err));
 })
 
 module.exports = schedule;

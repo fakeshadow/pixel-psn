@@ -13,14 +13,25 @@ module.exports = class ThreadDetail {
     }
 
     static findThreadId(onlineId) {
-        return threadDetails.filter(thread => thread.threadMembers.filter(member => member.onlineId === onlineId))
+        let temp = [];
+        threadDetails.map(thread => {
+            for (let i of thread.threadMembers) {
+                if (i.onlineId === onlineId) {
+                    temp.push({ 'threadId': thread.threadId })
+                }
+            }
+        })
+        return temp;
     }
 
     static findOnlineId(threadId) {
-        return threadDetails.map(thread => {
-            thread.threadId === threadId
-            return thread.threadMembers
-        })
+        let temp = [];
+        for (let t of threadDetails) {
+            if (t.threadId === threadId) {
+                temp.push({ 'threadMembers': t.threadMembers })
+            }
+        }
+        return temp;
     }
 
     static getThreadsModifiedDate() {
