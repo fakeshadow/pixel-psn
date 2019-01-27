@@ -1,7 +1,6 @@
 const formData = require('form-data');
 const request = require('request');
-const fetch = require('node-fetch');
-const querystring = require('querystring');
+const qs = require('qs');
 
 const token = require('./tokens');
 const ThreadDetail = require('../../models/psn/messages/threaddetails');
@@ -52,19 +51,31 @@ exports.getThreadMessages = (req, res) => {
 		.catch(err => res.json(err));
 }
 
-exports.leaveThread  = (req, res) => {
+exports.leaveThread = (req, res) => {
 	const accessToken = token.getLocalToken();
 	const threadId = req.body.threadId
-	fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`, 
-	{
-		method: 'DELETE',
-		headers: {
-			'Authorization': `Bearer ${accessToken}`
-		},
-		redirect: 'follow',
+	return request.delete({
+		url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`,
+		auth: {
+			'bearer': `${accessToken}`
+		}
+	}, (err, response, body) => {
+		if (err) {
+			res.send('err:', err);
+		} else {
+			res.send('success');
+		}
 	})
-	.then(() => res.send('Done'))
-	.catch(err => res.send(err))	
+	// fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`, 
+	// {
+	// 	method: 'DELETE',
+	// 	headers: {
+	// 		'Authorization': `Bearer ${accessToken}`
+	// 	},
+	// 	redirect: 'follow',
+	// })
+	// .then(() => res.send('Done'))
+	// .catch(err => res.send(err))	
 }
 
 exports.sendMessageToThread = (req, res) => {
@@ -212,18 +223,33 @@ newThread = (onlineId, accessToken) => {
 
 
 oldThreads = accessToken => {
-	return fetch(`${process.env.MESSAGE_THREAD_API}threads/`,
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
+	return new Promise((resolve, reject) => {
+		request.get({
+			url: `${process.env.MESSAGE_THREAD_API}threads/`,
+			auth: {
+				'bearer': `${accessToken}`
+			}
+		}, (err, response, body) => {
+			if (err) {
+				reject(JSON.parse(err))
+			} else {
+				resolve(JSON.parse(body).threads);
+			}
 		})
-		.then(res => res.json())
-		.then(threads => {
-			return threads.threads;
-		})
+	})
+
+	// return fetch(`${process.env.MESSAGE_THREAD_API}threads/`,
+	// 	{
+	// 		method: 'GET',
+	// 		headers: {
+	// 			'Authorization': `Bearer ${accessToken}`
+	// 		},
+	// 		redirect: 'follow',
+	// 	})
+	// 	.then(res => res.json())
+	// 	.then(threads => {
+	// 		return threads.threads;
+	// 	})
 }
 
 //get one thread detail
@@ -232,17 +258,31 @@ detailThread = (threadId, count, accessToken) => {
 		'fields': 'threadMembers,threadNameDetail,threadThumbnailDetail,threadProperty,latestTakedownEventDetail,newArrivalEventDetail,threadEvents',
 		'count': count   //show upto 100 recent messages from one thread
 	}
-	return fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}?` + querystring.stringify(field),
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
+	return new Promise((resolve, reject) => {
+		request.get({
+			url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}?` + qs.stringify(field),
+			auth: {
+				'bearer': `${accessToken}`
+			}
+		}, (err, response, body) => {
+			if (err) {
+				reject(JSON.parse(err))
+			} else {
+				resolve(JSON.parse(body));
+			}
 		})
-		.then(res => res.json())
-		.then(threads => {
-			return threads;
-		})
+	})
+	// return fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}?` + qs.stringify(field),
+	// 	{
+	// 		method: 'GET',
+	// 		headers: {
+	// 			'Authorization': `Bearer ${accessToken}`
+	// 		},
+	// 		redirect: 'follow',
+	// 	})
+	// 	.then(res => res.json())
+	// 	.then(threads => {
+	// 		return threads;
+	// 	})
 }
 

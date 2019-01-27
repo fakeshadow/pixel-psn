@@ -1,40 +1,28 @@
-const fetch = require('node-fetch');
-
 const qs = require('qs');
-const querystring = require('querystring');
-
 const fs = require('fs');
 const path = require('path');
+const request = require('request');
 
 const p = path.join(path.dirname(process.mainModule.filename), 'token', `token.json`);
 
 let accessToken;
 
 exports.login = (req, res) => {
+    console.log(req.body)
     getNpsso(req.body.uuId, req.body.twoFA)
-        .then(res => res.json())
-        .then(npsso => {
-            return getGrant(npsso.npsso)
-        })
-        .then(res => {
-            return res.headers.get('x-np-grant-code');
-        })
-        .then(code => {
-            return getToken(code);
-        })
-        .then(res => res.json())
+        .then(npsso => getGrant(npsso.npsso))
+        .then(code => getToken(code))
         .then(tok => {
             accessToken = tok.access_toke;
             fs.writeFile(p, JSON.stringify({ "token": tok.refresh_token }), err => console.log(err));
         })
         .then(() => res.send('Logged in'))
         .catch(err => res.send(err));
-
 }
 
 // check token when service start
 exports.checkToken = callback => {
-    getRefreshToken().then(tok => {
+    getLocalRefreshToken().then(tok => {
         if (tok.token.length) {
             getaccessToken();
             callback(true);
@@ -55,43 +43,12 @@ exports.getStatus = (req, res) => {
 }
 
 // Token stuff
-getaccessToken = () => {
-    getRefreshToken()
-        .then(tok => {
-            fetch(`${process.env.AUTH_API}oauth/token`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: qs.stringify({
-                        app_context: 'inapp_ios',
-                        client_id: process.env.CLIENT_ID,
-                        client_secret: process.env.CLIENT_SECRET,
-                        refresh_token: tok.token,
-                        duid: process.env.DUID,
-                        scope: process.env.SCOPE,
-                        grant_type: 'refresh_token'
-                    })
-                })
-                .then(res => res.json())
-                .then(tok => {
-                    accessToken = tok.access_token;
-                    fs.readFile(p, (err, file) => {
-                        return fs.writeFile(p, JSON.stringify({ "token": tok.refresh_token }), err => console.log(err));
-                    })
-                })
-                .catch(err => console.log(err))
-        })
-        .catch(err => console.log(err))
-}
-
 getToken = grantcode => {
-    return fetch(`${process.env.AUTH_API}oauth/token`,
-        {
-            method: 'POST',
+    return new Promise((resolve, reject) => {
+        request.post({
+            url: `${process.env.AUTH_API}oauth/token`,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: qs.stringify({
                 client_id: process.env.CLIENT_ID,
@@ -101,7 +58,14 @@ getToken = grantcode => {
                 code: grantcode,
                 grant_type: 'authorization_code'
             })
+        }, (err, response, body) => {
+            if (err) {
+                reject(JSON.parse(err));
+            } else {
+                resolve(JSON.parse(body));
+            }
         })
+    })
 }
 
 getGrant = npsso => {
@@ -112,23 +76,32 @@ getGrant = npsso => {
         "scope": process.env.SCOPE,
         "response_type": "code",
     }
-    return fetch(`${process.env.AUTH_API}oauth/authorize?` + querystring.stringify(code_request),
-        {
-            method: 'GET',
+    return new Promise((resolve, reject) => {
+        request.get({
+            url: `${process.env.AUTH_API}oauth/authorize?` + qs.stringify(code_request),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
             headers: {
                 'Cookie': `npsso=${npsso}`
             },
-            redirect: 'manual',
-            follow: 1
+            followRedirect: false
+        }, (err, response, body) => {
+            if (err) {
+                reject(JSON.parse(err));
+            } else {
+                resolve(response.headers['x-np-grant-code']);
+            }
         })
+    })
 }
 
 getNpsso = (uuid, tfa) => {
-    return fetch(`${process.env.AUTH_API}ssocookie`,
-        {
-            method: 'POST',
+    return new Promise((resolve, reject) => {
+        request.post({
+            url: `${process.env.AUTH_API}ssocookie`,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: qs.stringify({
                 authentication_type: 'two_step',
@@ -136,11 +109,27 @@ getNpsso = (uuid, tfa) => {
                 ticket_uuid: uuid,
                 code: tfa
             })
+        }, (err, response, body) => {
+            if (err) {
+                reject(JSON.parse(err));
+            } else {
+                resolve(JSON.parse(body));
+            }
         })
+    })
 }
 
 //local cache
-getRefreshToken = () => {
+getaccessToken = () => {
+    getLocalRefreshToken()
+        .then(tok => useRefreshToken(tok.token))
+        .then(tok => {
+            accessToken = tok.access_token
+        })
+        .catch(err => console.log(err));
+}
+
+getLocalRefreshToken = () => {
     return new Promise((resolve, reject) => {
         fs.readFile(p, (err, file) => {
             if (err || !file.length) {
@@ -148,6 +137,32 @@ getRefreshToken = () => {
             }
             resolve(JSON.parse(file));
         });
+    })
+}
+
+useRefreshToken = token => {
+    return new Promise((resolve, reject) => {
+        request.post({
+            url: `${process.env.AUTH_API}oauth/token`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: qs.stringify({
+                app_context: 'inapp_ios',
+                client_id: process.env.CLIENT_ID,
+                client_secret: process.env.CLIENT_SECRET,
+                refresh_token: token,
+                duid: process.env.DUID,
+                scope: process.env.SCOPE,
+                grant_type: 'refresh_token'
+            })
+        }, (err, response, body) => {
+            if (err) {
+                reject(JSON.parse(err));
+            } else {
+                resolve(JSON.parse(body));
+            }
+        })
     })
 }
 

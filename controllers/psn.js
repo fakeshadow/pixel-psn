@@ -1,7 +1,5 @@
-// at least 2 denpendcies are duplicated, better get rid of them later.
 const fetch = require('node-fetch');
-const querystring = require('querystring');
-
+const qs = require('qs')
 const token = require('./psn/tokens');
 const Trophylist = require('../models/psn/users/trophylist');
 
@@ -20,7 +18,7 @@ exports.getTrophies = (req, res) => {
 		'limit': req.params.limit,
 		'comparedUser': req.params.onlineId
 	}
-	fetch(`${process.env.USER_TROPHY_API}?` + querystring.stringify(fields),
+	fetch(`${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
 		{
 			method: 'GET',
 			headers: {
@@ -41,7 +39,7 @@ exports.getIndividualGame = (req, res) => {
 		'npLanguage': 'en',
 		'comparedUser': req.params.onlineId
 	}
-	fetch(`${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + querystring.stringify(fields),
+	fetch(`${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
 		{
 			method: 'GET',
 			headers: {
@@ -114,7 +112,7 @@ getSummary = (offset, comparedUser) => {
 		'limit': 100,
 		'comparedUser': comparedUser
 	}
-	return fetch(`${process.env.USER_TROPHY_API}?` + querystring.stringify(fields),
+	return fetch(`${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
 		{
 			method: 'GET',
 			headers: {
@@ -131,7 +129,7 @@ async function getIndividualGame(npCommunicationId, comparedUser) {
 		'npLanguage': 'en',
 		'comparedUser': comparedUser
 	}
-	return fetch(`${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + querystring.stringify(fields),
+	return fetch(`${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
 		{
 			method: 'GET',
 			headers: {

@@ -124,6 +124,21 @@ npm 6.4.1
 > 'threadId': 'leave this message thread'
 
 
+#### get user activities
+>POST   /profile/activity        
+>
+> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded').
+>currently have bug and can only retrive the right result on the first try.
+>
+> Accept keys and values:  
+>
+> 'onlineId': 'the user you want to check activities'
+>
+> 'page': 'start with 1'
+>
+> 'type': 'feed or news'
+
+
 
 ### issue:
 

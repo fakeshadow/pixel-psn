@@ -4,6 +4,7 @@ const psnController = require('../controllers/psn');
 const psnTokenController = require('../controllers/psn/tokens');
 const psnMessageController = require('../controllers/psn/message');
 const psnProfileController = require('../controllers/psn/profile');
+const psnCommunityController = require('../controllers/psn/community');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.get('/test/stats/', psnTokenController.getStatus);
 
 // testn
 
-
+// commnutiy related
 
 // message related
 router.get('/message/new', psnMessageController.getThreadsModifiedDate);
@@ -34,6 +35,7 @@ router.get('/trophy/:start/:limit/:onlineId', psnController.getTrophies);
 
 // profie and autnetication
 router.get('/profile/:onlineId', psnProfileController.getProfile);
+router.post('/profile/activity', psnProfileController.getUserActivities);
 router.post('/login', psnTokenController.login);
 
 
