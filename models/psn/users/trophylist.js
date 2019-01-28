@@ -7,6 +7,8 @@ module.exports = class Trophylist {
         this.comparedUser = comparedUser;
     }
     
+    
+
     save() {
         trophylist.push(this);
     }

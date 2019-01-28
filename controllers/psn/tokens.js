@@ -8,7 +8,6 @@ const p = path.join(path.dirname(process.mainModule.filename), 'token', `token.j
 let accessToken;
 
 exports.login = (req, res) => {
-    console.log(req.body)
     getNpsso(req.body.uuId, req.body.twoFA)
         .then(npsso => getGrant(npsso.npsso))
         .then(code => getToken(code))
@@ -123,9 +122,7 @@ getNpsso = (uuid, tfa) => {
 getaccessToken = () => {
     getLocalRefreshToken()
         .then(tok => useRefreshToken(tok.token))
-        .then(tok => {
-            accessToken = tok.access_token
-        })
+        .then(tok => accessToken = tok.access_token)
         .catch(err => console.log(err));
 }
 
