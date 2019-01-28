@@ -1,13 +1,11 @@
-const fetch = require('node-fetch');
 const qs = require('qs')
 const token = require('./psn/tokens');
-const Trophylist = require('../models/psn/users/trophylist');
+const Trophylist = require('../models/psn/db/trophylist');
 const request = require('request');
 
-const profile = require('../models/psn/db/proflie');
+const Profile = require('../models/psn/db/proflie');
 
 require('dotenv').config();
-
 
 // Return only summary. hard code some params for now. Will change it to post and use body to send params. 
 exports.getTrophies = (req, res) => {
@@ -21,18 +19,18 @@ exports.getTrophies = (req, res) => {
 		'limit': req.params.limit,
 		'comparedUser': req.params.onlineId
 	}
-	fetch(`${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
-		})
-		.then(res => res.json())
-		.then(trp => {
-			res.json(trp);
-		})
+	request.get({
+		url: `${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
+		auth: {
+			'bearer': `${accessToken}`
+		}
+	}, (err, response, body) => {
+		if (err) {
+			res.json(err);
+		} else {
+			res.json(JSON.parse(body));
+		}
+	})
 }
 
 exports.getIndividualGame = (req, res) => {
@@ -42,69 +40,78 @@ exports.getIndividualGame = (req, res) => {
 		'npLanguage': 'en',
 		'comparedUser': req.params.onlineId
 	}
-	fetch(`${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
-		})
-		.then(response => response.json())
-		.then(trp => res.json(trp))
-		.catch(err => res.send(err));
+	request.get({
+		url: `${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
+		auth: {
+			'bearer': `${accessToken}`
+		}
+	}, (err, response, body) => {
+		if (err) {
+			res.json(err);
+		} else {
+			res.json(JSON.parse(body));
+		}
+	})
 }
 
 // currently very slow. Need to find a work around.
 
-// need to change to post method.   basic flow:  check cache => check last update time => update profile => update game list => update games
-//																										 => update profile cache
+// need to change to post method. 
 
-exports.getAllTrophies = (req, res) => {
+exports.getAllTrophies = async (req, res) => {
 	const accessToken = token.getLocalToken();
 	let start = 0;
-	let count;
-	getSummary(start, req.params.onlineId, accessToken)
-		.then(summary => {
-			res.send('Request is sent. Please check result later with /trophies/result')
-			count = summary.totalResults;
-			summary.trophyTitles.map(list => {
-				const user = new user(npId, onlineId, games, blockChainId)
-				user.save();
-				const trophylist = new Trophylist(list.npCommunicationId, list.comparedUser);
-				return trophylist.save();
-			})
-		})
-		.then(async () => {
-			if (count <= 100) {
-				return;
-			} else {
-				while (start <= count) {
-					start += 100;
-					await getSummary(start, req.params.onlineId, accessToken)
-						.then(summary => {
-							summary.trophyTitles.map(list => {
-								const trophylist = new Trophylist(list.npCommunicationId, list.comparedUser);
-								return trophylist.save();
-							})
-						})
-				}
-			}
-		})
-		.then(async () => {
-			const lists = Trophylist.fetchAllList();
-			const npId = await checkAccountId(req.params.onlineId);
-			for (let l of lists) {
-				await wait(req.params.waitTime);
-				await getIndividualGame(l.npCommunicationId, req.params.onlineId)
-					.then(res => res.json())
-					.then(async (res) => {
-						const smallList = await filterList(res.trophies);
-						Trophylist.saveDetail({ 'n': l.npCommunicationId, 'u': npId, 't': smallList })
-					})
-			}
-		})
-		.catch(err => console.log(err));
+	let alteredList = [];
+
+	// construct a new profile //
+	const profileTemp = await getProfile(req.params.onlineId, accessToken);
+	let summary = await getSummary(start, req.params.onlineId, accessToken);
+	res.json(profileTemp);
+	const count = summary.totalResults;
+	let games = summary.trophyTitles;
+	if (count > 100) {
+		while (start <= count) {
+			start += 100;
+			await wait(req.params.waitTime);
+			summary = await getSummary(start, req.params.onlineId, accessToken);
+			games = games.concat(summary.trophyTitles);
+		}
+	}
+	games = await games.map(game => ({
+		'npCommunicationId': game.npCommunicationId,
+		'progress': game.comparedUser.progress,
+		'earnedTrophies': game.comparedUser.earnedTrophies,
+		'lastUpdateDate': game.comparedUser.lastUpdateDate
+	}))
+	const profile = new Profile({
+		_id: profileTemp.npId,
+		onlineId: profileTemp.onlineId,
+		region: profileTemp.region,
+		avatarUrl: profileTemp.avatarUrl,
+		games: games,
+		trophySummary: profileTemp.trophySummary,
+		blockChainId: null,
+		lastUpdateTime: new Date
+	})
+	profile.save().catch(err => console.log(err));
+	await wait(req.params.waitTime);
+	for (let game of games) {
+		try {
+			await wait(req.params.waitTime)
+			const individualGame = await getIndividualGame(game.npCommunicationId, req.params.onlineId, accessToken);
+			const smallList = filterList(individualGame.trophies);
+			console.log(smallList);
+			console.log(alteredList.length);
+			alteredList.push({ 'npCommunicationId': game.npCommunicationId, 'trophies': smallList })
+		} catch (err) {
+			console.log(err);
+		}
+	}
+	const trophylist = new Trophylist({
+		_id: profileTemp.npId,
+		lists: alteredList,
+	})
+	trophylist.save().catch(err => console.log(err));
 }
 
 exports.checkAllTrophies = (req, res) => {
@@ -113,7 +120,6 @@ exports.checkAllTrophies = (req, res) => {
 
 
 // trophy stuff
-
 getSummary = (offset, comparedUser, accessToken) => {
 	return new Promise((resolve, reject) => {
 		const fields = {
@@ -146,7 +152,7 @@ getProfile = (onlineId, accessToken) => {
 			'fields': '@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary',
 		}
 		request.get({
-			url: `${process.env.USERS_API}${req.params.onlineId}/profile?` + qs.stringify(fields),
+			url: `${process.env.USERS_API}${onlineId}/profile?` + qs.stringify(fields),
 			auth: {
 				'bearer': `${accessToken}`
 			}
@@ -160,51 +166,15 @@ getProfile = (onlineId, accessToken) => {
 	})
 }
 
-
-
-getIndividualGame = async (npCommunicationId, comparedUser) => {
-	const accessToken = token.getLocalToken();
-	const fields = {
-		'fields': '@default,trophyRare,trophyEarnedRate',
-		'npLanguage': 'en',
-		'comparedUser': comparedUser
-	}
-	return await fetch(`${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
-		{
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`
-			},
-			redirect: 'follow',
-		})
-}
-
-// rate control,need tuning for better result
-wait = ms => {
-	return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-
-// filter each list and make the detail minimal
-filterList = async (trophies) => {
-	return await trophies.map(trophy => {
-		if (trophy.comparedUser.earned === true) {
-			return { 'd': trophy.comparedUser.earnedDate }
-		} else {
-			return {}
-		}
-	})
-}
-
-// recheck user's npId and replace the onlineId
-checkAccountId = onlineId => {
+getIndividualGame = (npCommunicationId, onlineId, accessToken) => {
 	return new Promise((resolve, reject) => {
-		const accessToken = token.getLocalToken();
 		const fields = {
-			'fields': '@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary',
+			'fields': '@default,trophyRare,trophyEarnedRate',
+			'npLanguage': 'en',
+			'comparedUser': onlineId
 		}
 		request.get({
-			url: `${process.env.USERS_API}${onlineId}/profile?` + qs.stringify(fields),
+			url: `${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
 			auth: {
 				'bearer': `${accessToken}`
 			}
@@ -212,9 +182,26 @@ checkAccountId = onlineId => {
 			if (err) {
 				reject(err);
 			} else {
-				resolve(JSON.parse(body).npId);
+				resolve(JSON.parse(body));
 			}
 		})
 	})
 }
+
+// rate control,need tuning for better result
+wait = ms => {
+	return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// filter each list and make the detail minimal
+filterList = trophies => {
+	return trophies.map(trophy => {
+		if (trophy.comparedUser.earned === true) {
+			return { 'earnedDate': trophy.comparedUser.earnedDate }
+		} else {
+			return {}
+		}
+	})
+}
+
 

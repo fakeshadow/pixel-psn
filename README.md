@@ -5,12 +5,21 @@ npm 6.4.1
 
 ### Setup:
 1. clone this repo
+
 2. go into the folder and run 
 
    npm install
+
 3. Rename .env_sample to .env and change whatever params you want
+
 4. npm start
 
+### Addtional Setup:
+1. install mongoDB
+
+2. create a databse called "psn" and setup a user password for it.
+
+3. change the DATABASE setting in .env file according to your previous setting.
 
 ### API endpoints:
 
@@ -156,8 +165,8 @@ Messy code.
 
 
 ### todo:
-> fully function social features.
-> databse support.
+> docker and scaleble multiple instance support.
+> basic front end.
 > blockchain implement.
 
 > fork form-data to add custom content-length
