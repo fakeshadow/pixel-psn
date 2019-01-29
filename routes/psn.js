@@ -1,6 +1,6 @@
 const express = require('express');
 
-const psnController = require('../controllers/psn');
+const psnTrophyController = require('../controllers/psn/trophy');
 const psnTokenController = require('../controllers/psn/tokens');
 const psnMessageController = require('../controllers/psn/message');
 const psnProfileController = require('../controllers/psn/profile');
@@ -12,7 +12,9 @@ const router = express.Router();
 router.get('/test/stats/', psnTokenController.getStatus);
 
 
-// testn
+// test
+router.get('/test', psnTrophyController.test);
+
 
 // commnutiy related
 
@@ -27,10 +29,10 @@ router.post('/message/leave', psnMessageController.leaveThread);
 
 
 // trophy retated
-router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnController.getIndividualGame);
-router.get('/trophies/result', psnController.checkAllTrophies);
-router.get('/trophies/getall/:onlineId/:waitTime', psnController.getAllTrophies);
-router.get('/trophy/:start/:limit/:onlineId', psnController.getTrophies);
+router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnTrophyController.getIndividualGame);
+router.get('/trophies/result', psnTrophyController.checkAllTrophies);
+router.get('/trophies/getall/:onlineId/:waitTime', psnTrophyController.getAllTrophies);
+router.get('/trophy/:start/:limit/:onlineId', psnTrophyController.getTrophies);
 
 
 // profie and autnetication

@@ -153,7 +153,7 @@ npm 6.4.1
 
 JS is async by nature so it's very easy to throttle your PSN API by accident. Be ware that happen and restart the app when you are at it.
 
-Your refresh token is stored in cert/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
+Your refresh token is stored in token/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
 
 Refresh token may expire and you have to login again manually.
 
@@ -165,7 +165,7 @@ Messy code.
 
 
 ### todo:
-> docker and scaleble multiple instance support.
+> docker and scalable multiple instance support.
 > basic front end.
 > blockchain implement.
 

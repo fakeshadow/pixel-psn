@@ -66,16 +66,6 @@ exports.leaveThread = (req, res) => {
 			res.send('success');
 		}
 	})
-	// fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`, 
-	// {
-	// 	method: 'DELETE',
-	// 	headers: {
-	// 		'Authorization': `Bearer ${accessToken}`
-	// 	},
-	// 	redirect: 'follow',
-	// })
-	// .then(() => res.send('Done'))
-	// .catch(err => res.send(err))	
 }
 
 exports.sendMessageToThread = (req, res) => {
@@ -237,19 +227,6 @@ oldThreads = accessToken => {
 			}
 		})
 	})
-
-	// return fetch(`${process.env.MESSAGE_THREAD_API}threads/`,
-	// 	{
-	// 		method: 'GET',
-	// 		headers: {
-	// 			'Authorization': `Bearer ${accessToken}`
-	// 		},
-	// 		redirect: 'follow',
-	// 	})
-	// 	.then(res => res.json())
-	// 	.then(threads => {
-	// 		return threads.threads;
-	// 	})
 }
 
 //get one thread detail
@@ -272,17 +249,5 @@ detailThread = (threadId, count, accessToken) => {
 			}
 		})
 	})
-	// return fetch(`${process.env.MESSAGE_THREAD_API}threads/${threadId}?` + qs.stringify(field),
-	// 	{
-	// 		method: 'GET',
-	// 		headers: {
-	// 			'Authorization': `Bearer ${accessToken}`
-	// 		},
-	// 		redirect: 'follow',
-	// 	})
-	// 	.then(res => res.json())
-	// 	.then(threads => {
-	// 		return threads;
-	// 	})
 }
 
