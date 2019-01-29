@@ -4,8 +4,7 @@ const Schema = mongoose.Schema;
 
 const scheduleSchema = new Schema({
     _id: {
-        type: String,
-        required: true
+        type: String
     },
     games : {
         type: Array,
