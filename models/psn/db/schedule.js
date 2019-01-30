@@ -3,11 +3,16 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const scheduleSchema = new Schema({
-    _id: {
-        type: String
+    npId: {
+        type: String,
+        required: true
     },
-    games : {
-        type: Array,
+    onlineId : {
+        type: String,
+        required: true
+    },
+    npCommunicationId : {
+        type: String,
         required: true
     }
 })

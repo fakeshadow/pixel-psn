@@ -15,7 +15,6 @@ router.get('/test/stats/', psnTokenController.getStatus);
 // test
 router.get('/test', psnTrophyController.test);
 
-
 // commnutiy related
 
 // message related
@@ -30,8 +29,7 @@ router.post('/message/leave', psnMessageController.leaveThread);
 
 // trophy retated
 router.get('/trophies/getgame/:onlineId/:npCommunicationId', psnTrophyController.getIndividualGame);
-router.get('/trophies/result', psnTrophyController.checkAllTrophies);
-router.get('/trophies/getall/:onlineId/:waitTime', psnTrophyController.getAllTrophies);
+router.get('/trophies/getall/:onlineId', psnTrophyController.getAllTrophies);
 router.get('/trophy/:start/:limit/:onlineId', psnTrophyController.getTrophies);
 
 

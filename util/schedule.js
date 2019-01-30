@@ -3,8 +3,6 @@ const psnTokenController = require('../controllers/psn/tokens');
 const psnMessageController = require('../controllers/psn/message');
 const psnTrophyController = require('../controllers/psn/trophy');
 
-let flag = true;
-
 schedule.scheduleJob('33 2 * * * *', () => {
     console.log('Refreshing accessToken!');
     psnTokenController.getTokenScheduled();
@@ -19,19 +17,18 @@ schedule.scheduleJob('1 * * * * *', () => {
 
 
 // use trophy working every second and queue worker up to deal with rate limit.
-// schedule.scheduleJob('1 * * * * * *', () => {
-//     if (flag === true) {
-//         flag === false;
-//         psnTrophyController
-//             .trophyWorker()
-//             .then(() => flag === true)
-//             .catch(err => {
-//                 setTimeout => (flag === true, 10000);
-//                 console.log(err);
-//             })
-//     }
-// })
+schedule.scheduleJob('*/4 * * * * *', () => {
+    psnTrophyController
+        .trophyWorker()
+        .catch(err => console.log(err));
 
+})
 
+delayAndShowErr = err => {
+    setTimeout(() => {
+        flag = true
+        console.log(err);
+    }, 5000);
+}
 
-module.exports = schedule
+module.exports = schedule;

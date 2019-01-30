@@ -56,7 +56,18 @@ exports.getIndividualGame = (req, res) => {
 }
 
 exports.test = (req, res) => {
-	Schedule.find().then(resp => console.log(resp))
+	// Trophylist
+	// 	.findById('Qmx1ZV9HQ0BhOC5oaw==')
+	// 	.then(trophylist => {
+	// 		// if (trophylist.length) {
+	// 		// 	trophylist.list.id('Blue_GC').set({ 'trophies': [1, 2, 3, 4] })
+	// 		// 	return trophylist.save();
+	// 		// }
+	// 		trophylist.list.push({ _id: 'testtest', trophies: [5, 6, 7, 8, 9] })
+	// 		return trophylist.save()
+	// 	})
+	// 	.then(result => console.log(result))
+	// 	.catch(err => console.log(err))
 }
 
 
@@ -64,74 +75,97 @@ exports.test = (req, res) => {
 // currently moving large object between functions, need to sort out it
 exports.getAllTrophies = async (req, res) => {
 	const accessToken = token.getLocalToken();
-	const profileExisted = await Profile.findOne({ 'onlineId': req.params.onlineId });
+
+	// time gate here
+
+	let profileNew;
+	let profileExisted;
+	try {
+		profileNew = await getProfile(req.params.onlineId, accessToken);
+		profileExisted = await Profile.findById({ _id: profileNew.npId });
+	}
+	catch (err) {
+		res.json({ 'error': 'Databse error' });
+	}
 	if (profileExisted) {
-		const profileNew = await getProfile(req.params.onlineId, accessToken);
 		res.json(profileNew);
 		updateProfile(req, profileNew, profileExisted, accessToken);
-		// } else if (profileExisted && time) {
-		// 	res.json(profileExisted);
 	} else {
-		const profileNew = await getProfile(req.params.onlineId, accessToken);
 		res.json(profileNew);
 		createProfile(req, profileNew, accessToken);
 	}
 }
 
-// main aim is to have minimal api calls and database I/O.
 updateProfile = async (req, profileNew, profileExisted, accessToken) => {
+	console.log('Starting update profile')
 	let start = 0;
 	let gamesOld = profileExisted.games;
 	let summary = await getSummary(start, req.params.onlineId, accessToken);
-	// const count = summary.totalResults;
-	let games = summary.trophyTitles;
-	games = games.map(game => ({
+	const count = summary.totalResults;
+	let gamesNew = summary.trophyTitles;
+	if (count > 100) {
+		while (start <= count) {
+			start += 100;
+			await wait(2000)
+			summary = await getSummary(start, req.params.onlineId, accessToken);
+			gamesNew = gamesNew.concat(summary.trophyTitles);
+		}
+	}
+	if (gamesNew.length !== count) {
+
+		// need add an failsafe function
+		console.log('failed at games count :' + gamesNew.length + '/' + count);
+		return false;
+	}
+	gamesNew = gamesNew.map(game => ({
 		'npCommunicationId': game.npCommunicationId,
 		'progress': game.comparedUser.progress,
 		'earnedTrophies': game.comparedUser.earnedTrophies,
 		'lastUpdateDate': game.comparedUser.lastUpdateDate
 	}))
 
-	// load more summarys until the same game with same last update date appear
-	let gamesNew = games;
-	let same = findSameGameSameTime(games, gamesOld);
-	while (same.length !== games.length) {
-		start += 100;
-		await wait(req.params.waitTime);
-		summary = await getSummary(start, req.params.onlineId, accessToken);
-		games = summary.trophyTitles;
-		games = games.map(game => ({
-			'npCommunicationId': game.npCommunicationId,
-			'progress': game.comparedUser.progress,
-			'earnedTrophies': game.comparedUser.earnedTrophies,
-			'lastUpdateDate': game.comparedUser.lastUpdateDate
-		}))
-		gamesNew = gamesNew.concat(games);
-		same = findSameGameSameTime(games, gamesOld);
-	}
-
 	// find new list and same list with newer last update date. concat them and save it into trophy update schedule.
 	let needUpdateGames = findDiffGame(gamesNew, gamesOld);
 	let needUpdateGames2 = findSameGameNewerTime(gamesNew, gamesOld);
+	console.log(needUpdateGames.length);
+	console.log(needUpdateGames2.length);
 	needUpdateGames = needUpdateGames.concat(needUpdateGames2);
 	needUpdateGames = needUpdateGames.map(game => ({
-		'npId': profileExisted._id,
+		'npId': profileNew.npId,
 		'onlineId': profileNew.onlineId,
 		'npCommunicationId': game.npCommunicationId
 	}))
-
 	if (needUpdateGames.length) {
-		// need to add function for filter schedule
-		schedule.updateMany(needUpdateGames, { upsert: true }).catch(err => console.log(err))
+		console.log('start saving into schedule');
+		for (let needUpdateGame of needUpdateGames) {
+			Schedule
+				.findOneAndUpdate(
+					{
+						'npId': profileNew.npId,
+						'onlineId': profileNew.onlineId,
+						'npCommunicationId': needUpdateGame.npCommunicationId
+					},
+					{
+						'npId': profileNew.npId,
+						'onlineId': profileNew.onlineId,
+						'npCommunicationId': needUpdateGame.npCommunicationId
+					},
+					{
+						upsert: true
+					}
+				)
+				.catch(err => console.log(err));
+		}
 	}
 
 	// concat new with old and cut duplicated lists(will save the duplicated list with newer lastUpdateTime).
 	games = gamesNew.concat(gamesOld);
 	games = cutDuplicate(games);
+	console.log('start updating profile');
 	Profile
 		.updateOne(
 			{
-				_id: profileExisted._id
+				_id: profileNew.npId
 			},
 			{
 				onlineId: profileNew.onlineId,
@@ -139,24 +173,27 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 				games: games,
 				trophySummary: profileNew.trophySummary,
 				lastUpdateTime: new Date
-			})
+			}
+		)
 		.then(result => console.log(result)).catch(err => console.log(err));
 }
 
-
 createProfile = async (req, profileNew, accessToken) => {
 	let start = 0;
-	let alteredList = [];
 	let summary = await getSummary(start, req.params.onlineId, accessToken);
 	const count = summary.totalResults;
 	let games = summary.trophyTitles;
 	if (count > 100) {
 		while (start <= count) {
 			start += 100;
-			await wait(req.params.waitTime);
+			await wait(2000)
 			summary = await getSummary(start, req.params.onlineId, accessToken);
 			games = games.concat(summary.trophyTitles);
 		}
+	}
+	if (games.length !== count) {
+		console.log('failed at games count :' + gamesNew.length + '/' + count);
+		return false;
 	}
 	games = games.map(game => ({
 		'npCommunicationId': game.npCommunicationId,
@@ -164,8 +201,6 @@ createProfile = async (req, profileNew, accessToken) => {
 		'earnedTrophies': game.comparedUser.earnedTrophies,
 		'lastUpdateDate': game.comparedUser.lastUpdateDate
 	}))
-
-
 	const profile = new Profile({
 		_id: profileNew.npId,
 		onlineId: profileNew.onlineId,
@@ -178,69 +213,78 @@ createProfile = async (req, profileNew, accessToken) => {
 		lastUpdateTime: new Date
 	})
 	profile.save().catch(err => console.log(err));
-	// await wait(req.params.waitTime);
-	// for (let game of games) {
-	// 	try {
-	// 		await wait(req.params.waitTime)
-	// 		const individualGame = await getIndividualGame(game.npCommunicationId, req.params.onlineId, accessToken);
-	// 		const smallList = filterList(individualGame.trophies);
-	// 		alteredList.push({ 'npCommunicationId': game.npCommunicationId, 'trophies': smallList })
-	// 	} catch (err) {
-	// 		console.log(err);
-	// 	}
-	// }
-	// const trophylist = new Trophylist({
-	// 	_id: profileTemp.npId,
-	// 	lists: alteredList,
-	// })
-	// trophylist.save().catch(err => console.log(err));
+	for (let game of games) {
+		Schedule
+			.findOneAndUpdate(
+				{
+					'npId': profileNew.npId,
+					'onlineId': profileNew.onlineId,
+					'npCommunicationId': game.npCommunicationId
+				},
+				{
+					'npId': profileNew.npId,
+					'onlineId': profileNew.onlineId,
+					'npCommunicationId': game.npCommunicationId
+				},
+				{
+					upsert: true
+				}
+			)
+			.catch(err => console.log(err));
+	}
 }
-
-
-exports.checkAllTrophies = (req, res) => {
-	Trophylist.fetchAllDetail(result => res.json(result));
-}
-
 
 // schedule job for updating trophy list. find any result from Schedules collection and start an sync process. 
 exports.trophyWorker = () => {
-	return new Prmoise((resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		Schedule
-			.find()
-			.then(result => {
-				if (!result.length) {
+			.findOne()
+			.then(async (result) => {
+				if (!result) {
 					return resolve(false);
 				}
-				return result;
-			})
-			.then(async (result) => {
 				const accessToken = token.getLocalToken();
 				const npCommunicationId = result.npCommunicationId;
 				const npId = result.npId;
 				const onlineId = result.onlineId;
 				let individualGame;
-				try {
-					individualGame = await getIndividualGame(npCommunicationId, onlineId, accessToken);
-				} catch (err) {
-					return reject(err);
+				console.log('check working point at get individualGame')
+				individualGame = await getIndividualGame(npCommunicationId, onlineId, accessToken);
+				if (!individualGame.trophies.length) {
+					return reject(individualGame);
 				}
 				const smallList = filterList(individualGame.trophies);
-				alteredList.push({ 'npCommunicationId': game.npCommunicationId, 'trophies': smallList })
-				Schedule.findByIdAndRemove({ _id: result._id })
-					.then(() => {
-						return Trophylist.updateOne({ _id: npId }, { lists: alteredList }, { upert: true })
+				return Trophylist
+					.findById(npId)
+					.then(trophylist => {
+						if (trophylist) {
+							const id = trophylist.list.id(npCommunicationId);
+							if (id) {
+								trophylist.list.id(npCommunicationId).set({ _id: npCommunicationId, trophies: smallList });
+							} else {
+								trophylist.list.push({ _id: npCommunicationId, trophies: smallList });
+							}
+							trophylist
+								.save()
+								.then(() => Schedule.findByIdAndRemove({ _id: result._id }))
+								.catch(err => reject(err));
+						} else {
+							trophylistNew = new Trophylist(
+								{
+									_id: npId,
+									list: [{ _id: npCommunicationId, trophies: smallList }]
+								}
+							)
+							trophylistNew
+								.save()
+								.then(() => Schedule.findByIdAndRemove({ _id: result._id }))
+								.catch(err => reject(err));
+						}
 					})
-					.catch(err => reject(err));
-
 			})
-			.then(result => resolve(result))
 			.catch(err => reject(err));
 	})
 }
-
-
-
-
 
 
 // function for update profile. there must be a better way to do it but i'm suck at math.
@@ -267,15 +311,15 @@ findDiffGame = (gamesNew, gamesOld) => {
 		return !gamesOld.some(gameOld => gameNew.npCommunicationId == gameOld.npCommunicationId)
 	})
 }
-cutDuplicate = k => {
-	for (let i = 0; i < k.length; i++) {
-		for (let j = i + 1; j < k.length; j++) {
-			if (k[i].npCommunicationId === k[j].npCommunicationId) {
-				k.splice(j--, 1);
+cutDuplicate = games => {
+	for (let i = 0; i < games.length; i++) {
+		for (let j = i + 1; j < games.length; j++) {
+			if (games[i].npCommunicationId === games[j].npCommunicationId) {
+				games.splice(j--, 1);
 			}
 		}
 	}
-	return k
+	return games
 }
 
 
@@ -340,7 +384,7 @@ getIndividualGame = (npCommunicationId, onlineId, accessToken) => {
 			}
 		}, (err, response, body) => {
 			if (err) {
-				reject(err);
+				reject(JSON.parse(err));
 			} else {
 				resolve(JSON.parse(body));
 			}
