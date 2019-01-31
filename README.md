@@ -5,12 +5,21 @@ npm 6.4.1
 
 ### Setup:
 1. clone this repo
+
 2. go into the folder and run 
 
    npm install
+
 3. Rename .env_sample to .env and change whatever params you want
+
 4. npm start
 
+### Addtional Setup:
+1. install mongoDB
+
+2. create a databse called "psn" and setup a user password for it.
+
+3. change the DATABASE setting in .env file according to your previous setting.
 
 ### API endpoints:
 
@@ -35,11 +44,14 @@ npm 6.4.1
 
 #### get trophy summary
 > GET   /trophy/start_number/limit_number/user_psn_id
+>
+>will return a local result if database have the complete cache and start&&limit numbers are not used
 
 
 #### get trophy by game
-> GET   /trophies/getgame/user_psn_id/game_npId
-
+> GET   /trophies/getgame/user_psn_id/user_npId/game_npId
+>
+>will return a local result if database have cache of this game
 
 #### get all trophies
 > GET   /trophies/getall/user_psn_id/wait_time
@@ -144,7 +156,7 @@ npm 6.4.1
 
 JS is async by nature so it's very easy to throttle your PSN API by accident. Be ware that happen and restart the app when you are at it.
 
-Your refresh token is stored in cert/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
+Your refresh token is stored in token/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
 
 Refresh token may expire and you have to login again manually.
 
@@ -156,8 +168,8 @@ Messy code.
 
 
 ### todo:
-> fully function social features.
-> databse support.
+> docker and scalable multiple instance support.
+> basic front end.
 > blockchain implement.
 
 > fork form-data to add custom content-length

@@ -41,13 +41,14 @@ psnTokenController.checkToken(boolean => {
     console.log('No refresh token Please login');
 })
 
-//schedule jobs like refresh tokens
-schedule.scheduleJob();
 
 mongoose
     .connect(process.env.DATABASE, { useNewUrlParser: true })
-    .then(res => console.log('Database connected'))
-    .catch(err => console.log(err))
+    .then(res => { 
+        schedule.scheduleJob();
+        console.log('Database connected') 
+    })
+    .catch(err => console.log('Can not connect to database, Schedule job are not working'))
 
 app.listen(process.env.PORT || 3000, () => console.log('Listening on port: ', process.env.PORT || 3000));
 
