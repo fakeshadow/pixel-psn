@@ -54,10 +54,10 @@ npm 6.4.1
 >will return a local result if database have cache of this game
 
 #### get all trophies
-> GET   /trophies/getall/user_psn_id/wait_time
+> GET   /trophies/getall/user_psn_id/
 >     
-> * wait_time is in milliseconds. It's there to prevent throtting your PSN API acess. It's safe to set it above 1000 or even higher if you have multiple request at the same time.
-
+> * Background worker will handle most of the process later.
+>
 
 #### send message
 > POST  /message/send
