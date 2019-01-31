@@ -6,43 +6,49 @@ const Trophylist = require('../../models/psn/db/trophylist');
 const Profile = require('../../models/psn/db/proflie');
 const Schedule = require('../../models/psn/db/schedule');
 
-require('dotenv').config();
 
-// Return only summary. hard code some params for now. Will change it to post and use body to send params.
+// Return all games if the profile is already in database. Else it will show the recently games according to start and limit params.
 exports.getTrophies = (req, res) => {
-	const accessToken = token.getLocalToken();
-	const fields = {
-		'fields': '@default',
-		'npLanguage': 'en',
-		'iconSize': 'm',
-		'platform': 'PS3,PSVITA,PS4',
-		'offset': req.params.start,
-		'limit': req.params.limit,
-		'comparedUser': req.params.onlineId
-	}
-	request.get({
-		url: `${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
-		auth: {
-			'bearer': `${accessToken}`
-		}
-	}, (err, response, body) => {
-		if (err) {
-			res.json(err);
-		} else {
-			res.json(JSON.parse(body));
-		}
-	})
+	Profile
+		.findOne({ onlineId: req.params.onlineId })
+		.then(profile => {
+			if (profile) {
+				return res.json(profile);
+			}
+			const accessToken = token.getLocalToken();
+			return getSummary(req.params.limit, req.params.onlineId, accessToken)
+				.then(result => res.json(result))
+		})
+		.catch(err => res.json(err));
 }
 
 exports.getIndividualGame = (req, res) => {
 	const accessToken = token.getLocalToken();
+	Trophylist
+		.findById(req.params.npId)
+		.then(list => {
+			const result = list.list.id(req.params.npCommunicationId);
+			if (result) {
+				return res.json(result);
+			}
+			return getIndividualGame(req.params.npCommunicationId, req.params.onlineId, accessToken)
+				.then(result => res.json(result));
+
+		})
+		.catch(err => res.json(err));
+}
+
+exports.test = (req, res) => {
+	const accessToken = token.getLocalToken();
+	const onlineId = req.params.onlineId;
+	const npCommunicationId = req.params.npCommunicationId;
 	const fields = {
-		'fields': '@default,trophyRare,trophyEarnedRate',
+		'fields': '@default,trophyRare,trophyEarnedRate,hasTrophyGroups',
 		'npLanguage': 'en',
-		'comparedUser': req.params.onlineId
+		'comparedUser': process.env.MYID
 	}
 	request.get({
-		url: `${process.env.USER_TROPHY_API}/${req.params.npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
+		url: `${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
 		auth: {
 			'bearer': `${accessToken}`
 		}
@@ -53,21 +59,6 @@ exports.getIndividualGame = (req, res) => {
 			res.json(JSON.parse(body));
 		}
 	})
-}
-
-exports.test = (req, res) => {
-	// Trophylist
-	// 	.findById('Qmx1ZV9HQ0BhOC5oaw==')
-	// 	.then(trophylist => {
-	// 		// if (trophylist.length) {
-	// 		// 	trophylist.list.id('Blue_GC').set({ 'trophies': [1, 2, 3, 4] })
-	// 		// 	return trophylist.save();
-	// 		// }
-	// 		trophylist.list.push({ _id: 'testtest', trophies: [5, 6, 7, 8, 9] })
-	// 		return trophylist.save()
-	// 	})
-	// 	.then(result => console.log(result))
-	// 	.catch(err => console.log(err))
 }
 
 
@@ -85,7 +76,7 @@ exports.getAllTrophies = async (req, res) => {
 		profileExisted = await Profile.findById({ _id: profileNew.npId });
 	}
 	catch (err) {
-		res.json({ 'error': 'Databse error' });
+		return res.json({ 'error': 'Can not get profile Data' });
 	}
 	if (profileExisted) {
 		res.json(profileNew);
@@ -97,7 +88,6 @@ exports.getAllTrophies = async (req, res) => {
 }
 
 updateProfile = async (req, profileNew, profileExisted, accessToken) => {
-	console.log('Starting update profile')
 	let start = 0;
 	let gamesOld = profileExisted.games;
 	let summary = await getSummary(start, req.params.onlineId, accessToken);
@@ -127,8 +117,6 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 	// find new list and same list with newer last update date. concat them and save it into trophy update schedule.
 	let needUpdateGames = findDiffGame(gamesNew, gamesOld);
 	let needUpdateGames2 = findSameGameNewerTime(gamesNew, gamesOld);
-	console.log(needUpdateGames.length);
-	console.log(needUpdateGames2.length);
 	needUpdateGames = needUpdateGames.concat(needUpdateGames2);
 	needUpdateGames = needUpdateGames.map(game => ({
 		'npId': profileNew.npId,
@@ -136,7 +124,6 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 		'npCommunicationId': game.npCommunicationId
 	}))
 	if (needUpdateGames.length) {
-		console.log('start saving into schedule');
 		for (let needUpdateGame of needUpdateGames) {
 			Schedule
 				.findOneAndUpdate(
@@ -161,7 +148,6 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 	// concat new with old and cut duplicated lists(will save the duplicated list with newer lastUpdateTime).
 	games = gamesNew.concat(gamesOld);
 	games = cutDuplicate(games);
-	console.log('start updating profile');
 	Profile
 		.updateOne(
 			{
@@ -248,10 +234,9 @@ exports.trophyWorker = () => {
 				const npId = result.npId;
 				const onlineId = result.onlineId;
 				let individualGame;
-				console.log('check working point at get individualGame')
 				individualGame = await getIndividualGame(npCommunicationId, onlineId, accessToken);
 				if (!individualGame.trophies.length) {
-					return reject(individualGame);
+					return reject(npCommunicationId);
 				}
 				const smallList = filterList(individualGame.trophies);
 				return Trophylist
@@ -319,7 +304,7 @@ cutDuplicate = games => {
 			}
 		}
 	}
-	return games
+	return games;
 }
 
 

@@ -5,8 +5,6 @@ const qs = require('qs');
 const token = require('./tokens');
 const ThreadDetail = require('../../models/psn/messages/threaddetails');
 
-require('dotenv').config();
-
 
 //get all threads with major detail, used for schedule update
 exports.getAllThreades = () => {

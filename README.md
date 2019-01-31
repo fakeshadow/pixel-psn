@@ -44,11 +44,14 @@ npm 6.4.1
 
 #### get trophy summary
 > GET   /trophy/start_number/limit_number/user_psn_id
+>
+>will return a local result if database have the complete cache and start&&limit numbers are not used
 
 
 #### get trophy by game
-> GET   /trophies/getgame/user_psn_id/game_npId
-
+> GET   /trophies/getgame/user_psn_id/user_npId/game_npId
+>
+>will return a local result if database have cache of this game
 
 #### get all trophies
 > GET   /trophies/getall/user_psn_id/wait_time
