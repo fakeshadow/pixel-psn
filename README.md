@@ -151,6 +151,13 @@ npm 6.4.1
 > 'type': 'feed or news'
 
 
+#### find store items:
+>GET    /store/search/item_name
+>
+>* will return all related games info and cache them into the database.
+>change your store region and language in .env for now. Will add other stores later when all store features are ready
+
+
 
 ### issue:
 

@@ -39,28 +39,7 @@ exports.getIndividualGame = (req, res) => {
 }
 
 exports.test = (req, res) => {
-	const accessToken = token.getLocalToken();
-	const onlineId = req.params.onlineId;
-	const npCommunicationId = req.params.npCommunicationId;
-	const fields = {
-		'fields': '@default,trophyRare,trophyEarnedRate,hasTrophyGroups',
-		'npLanguage': 'en',
-		'comparedUser': process.env.MYID
-	}
-	request.get({
-		url: `${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
-		auth: {
-			'bearer': `${accessToken}`
-		}
-	}, (err, response, body) => {
-		if (err) {
-			res.json(err);
-		} else {
-			res.json(JSON.parse(body));
-		}
-	})
 }
-
 
 // need to change to post method. time gate existing profile to limit the update rate
 // currently moving large object between functions, need to sort out it
@@ -144,7 +123,6 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 				.catch(err => console.log(err));
 		}
 	}
-
 	// concat new with old and cut duplicated lists(will save the duplicated list with newer lastUpdateTime).
 	games = gamesNew.concat(gamesOld);
 	games = cutDuplicate(games);
@@ -161,7 +139,7 @@ updateProfile = async (req, profileNew, profileExisted, accessToken) => {
 				lastUpdateTime: new Date
 			}
 		)
-		.then(result => console.log(result)).catch(err => console.log(err));
+		.catch(err => console.log(err));
 }
 
 createProfile = async (req, profileNew, accessToken) => {
@@ -306,7 +284,16 @@ cutDuplicate = games => {
 	}
 	return games;
 }
-
+// filter each list and make the detail minimal
+filterList = trophies => {
+	return trophies.map(trophy => {
+		if (trophy.comparedUser.earned === true) {
+			return { 'earnedDate': trophy.comparedUser.earnedDate }
+		} else {
+			return {}
+		}
+	})
+}
 
 // trophy stuff
 getSummary = (offset, onlineId, accessToken) => {
@@ -382,15 +369,5 @@ wait = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// filter each list and make the detail minimal
-filterList = trophies => {
-	return trophies.map(trophy => {
-		if (trophy.comparedUser.earned === true) {
-			return { 'earnedDate': trophy.comparedUser.earnedDate }
-		} else {
-			return {}
-		}
-	})
-}
 
 
