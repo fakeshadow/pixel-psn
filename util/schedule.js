@@ -19,7 +19,7 @@ schedule.scheduleJob('1 * * * * *', () => {
 })
 
 // use trophy worker every 5 second and queue worker up to deal with rate limit.
-schedule.scheduleJob(`*/5 * * * * *`, () => {
+schedule.scheduleJob('*/5 * * * * *', () => {
     psnTrophyController
         .trophyWorker()
         .catch(err => console.log(err));
@@ -27,11 +27,10 @@ schedule.scheduleJob(`*/5 * * * * *`, () => {
 })
 
 // use store worker every 6 hours to get new gaming deals.
-schedule.scheduleJob(`* * */6 * * *`, () => {
+schedule.scheduleJob('*/6 * * *', () => {
     console.log('Starting update store');
     psnStoreController
         .storeWorker()
-        
         .catch(err => console.log(err));
 })
 
