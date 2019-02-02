@@ -14,7 +14,7 @@ router.get('/test/stats/', psnTokenController.getStatus);
 
 
 // test
-router.get('/test/:npCommunicationId/:onlineId', psnTrophyController.test);
+router.get('/store/test', psnStoreController.test);
 
 // commnutiy related
 
@@ -30,6 +30,7 @@ router.post('/message/leave', psnMessageController.leaveThread);
 
 // store related
 router.get('/store/search/:gameName', psnStoreController.search);
+router.get('/store/getgames', psnStoreController.getGames);
 
 // trophy related
 router.get('/trophies/getgame/:onlineId/:npId/:npCommunicationId', psnTrophyController.getIndividualGame);

@@ -8,6 +8,7 @@ const psnRouter = require('./routes/psn');
 const schedule = require('./util/schedule');
 const errorController = require('./controllers/error');
 const psnTokenController = require('./controllers/psn/tokens');
+const psnStoreController = require('./controllers/psn/store');
 
 require('dotenv').config();
 
@@ -37,9 +38,14 @@ psnTokenController.checkToken(boolean => {
 
 mongoose
     .connect(process.env.DATABASE, { useNewUrlParser: true })
-    .then(res => { 
-        schedule.scheduleJob();
-        console.log('Database connected'); 
+    .then(res => {
+        try {
+            schedule.scheduleJob();
+            psnStoreController.loadStoreItem();
+        } catch (err) {
+            console.log('start up process failed at: ',err);
+        }
+        console.log('Database connected');
     })
     .catch(err => console.log('Can not connect to database, Schedule job are not working'));
 
