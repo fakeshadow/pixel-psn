@@ -12,6 +12,8 @@ const router = express.Router();
 // test endpoint//
 router.get('/test/stats/', psnTokenController.getStatus);
 
+// trophy test
+router.get('/trophies/test', psnTrophyController.test);
 
 // test
 router.get('/store/test', psnStoreController.test);

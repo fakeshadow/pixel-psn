@@ -12,8 +12,7 @@ const profileSchema = new Schema({
     lastUpdateTime: { type: Date, required: true },
     games: [
         {
-            // npCommunicationId: { type: Schema.Types.ObjectId, ref: 'Trophylist', required: true },
-            npCommunicationId: { type: String, required: true },
+            npCommunicationId: { type: String, ref: 'Trophyset', required: true },
             progress: { type: Number, requied: true },
             earnedTrophies: { type: Object, requied: true },
             lastUpdateDate: { type: Date, requied: true },
@@ -21,27 +20,24 @@ const profileSchema = new Schema({
     ]
 })
 
-profileSchema.methods.addGames = function (gamesNew) {
-    const gamesOld = [...this.games];
-    for (let gameNew of gamesNew) {
-        let index = gamesOld.findIndex(gameOld => gameOld.npCommunicationId === gameNew.npCommunicationId)
-        if (index >= 0 && gamesOld[index].progress < gameNew.progress) {
-            gamesOld[index] = {
-                npCommunicationId: gameNew.npCommunicationId,
-                progress: gameNew.progress,
-                earnedTrophies: gameNew.earnedTrophies,
-                lastUpdateDate: gameNew.lastUpdateDate,
-            };
-        } else if (index < 0) {
-            gamesOld.unshift({
-                npCommunicationId: gameNew.npCommunicationId,
-                progress: gameNew.progress,
-                earnedTrophies: gameNew.earnedTrophies,
-                lastUpdateDate: gameNew.lastUpdateDate,
-            });
-        }
-    }
-    this.games = gamesOld;
+profileSchema.methods.create = function (games, profile) {
+    this._id = profile.npId;
+    this.onlineId = profile.onlineId;
+    this.region = profile.region;
+    this.avatarUrl = profile.avatarUrl;
+    this.trophySummary = profile.trophySummary;
+    this.lastUpdateTime = new Date;
+    this.games = games;
+    return this.save();
+}
+
+profileSchema.methods.update = function (games, profile) {
+    this.onlineId = profile.onlineId;
+    this.region = profile.region;
+    this.avatarUrl = profile.avatarUrl;
+    this.trophySummary = profile.trophySummary;
+    this.lastUpdateTime = new Date;
+    this.games = games;
     return this.save();
 }
 
