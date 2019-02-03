@@ -27,12 +27,12 @@ schedule.scheduleJob('*/5 * * * * *', () => {
 })
 
 // use store worker every 6 hours to get new gaming deals.
-schedule.scheduleJob('*/6 * * *', () => {
-    console.log('Starting update store');
-    psnStoreController
-        .storeWorker()
-        .catch(err => console.log(err));
-})
+// schedule.scheduleJob('*/6 * * *', () => {
+//     console.log('Starting update store');
+//     psnStoreController
+//         .storeWorker()
+//         .catch(err => console.log(err));
+// })
 
 delayAndShowErr = err => {
     setTimeout(() => {
