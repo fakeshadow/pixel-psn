@@ -2,6 +2,7 @@ const qs = require('qs');
 const fs = require('fs');
 const path = require('path');
 const request = require('request');
+const private = require('../../models/private/private');
 
 const p = path.join(path.dirname(process.mainModule.filename), 'token', `token.json`);
 

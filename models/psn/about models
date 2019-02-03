@@ -1,2 +1,0 @@
-PSN Models are used for cache some data in memory and save traffic.
-Please use a database if you want to store them in storage.

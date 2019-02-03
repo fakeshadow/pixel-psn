@@ -1,22 +1,19 @@
 const express = require('express');
-const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const mongoose = require('mongoose');
 
 const psnRouter = require('./routes/psn');
-
 const schedule = require('./util/schedule');
-
 const errorController = require('./controllers/error');
 const psnTokenController = require('./controllers/psn/tokens');
+const psnStoreController = require('./controllers/psn/store');
 
 require('dotenv').config();
 
 const app = express();
 
-//app.use(morgan('tiny'));
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(multer()
@@ -28,9 +25,7 @@ app.use(multer()
         { name: 'type', maxCount: 1 }
     ]));
 
-
 app.use(psnRouter);
-
 app.use(errorController.get404);
 
 //get tokens on service start
@@ -41,14 +36,18 @@ psnTokenController.checkToken(boolean => {
     console.log('No refresh token Please login');
 })
 
-
 mongoose
     .connect(process.env.DATABASE, { useNewUrlParser: true })
-    .then(res => { 
-        schedule.scheduleJob();
-        console.log('Database connected') 
+    .then(res => {
+        try {
+            schedule.scheduleJob();
+            psnStoreController.loadStoreItem();
+        } catch (err) {
+            console.log('start up process failed at: ',err);
+        }
+        console.log('Database connected');
     })
-    .catch(err => console.log('Can not connect to database, Schedule job are not working'))
+    .catch(err => console.log('Can not connect to database, Schedule job are not working'));
 
 app.listen(process.env.PORT || 3000, () => console.log('Listening on port: ', process.env.PORT || 3000));
 

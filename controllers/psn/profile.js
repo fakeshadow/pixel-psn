@@ -38,7 +38,7 @@ exports.getUserActivities = (req, res) => {
     }
     const accessToken = token.getLocalToken();
     request.get({
-        url: `${process.env.ACTIVITY_API}v1/users/${req.body.onlineId}/${req.body.type}/${req.body.page}?`,
+        url: `${process.env.ACTIVITY_API}v1/users/${req.body.onlineId}/${req.body.type}/${req.body.page}?` + qs.stringify(body),
         auth: {
             'bearer': `${accessToken}`
         },

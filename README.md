@@ -54,10 +54,17 @@ npm 6.4.1
 >will return a local result if database have cache of this game
 
 #### get all trophies
+<<<<<<< HEAD
 > GET   /trophies/getall/user_psn_id/
 >     
 > * Background worker will handle most of the process later.
 >
+=======
+> GET   /trophies/getall/user_psn_id
+>     
+> * Background worker will handle most of the work later and the results will cached into database.
+
+>>>>>>> 56fd320e157b35c30946d59d0cc78cc5f9835d3d
 
 #### send message
 > POST  /message/send
@@ -151,6 +158,18 @@ npm 6.4.1
 > 'type': 'feed or news'
 
 
+#### find store items:
+>GET    /store/search/item_name
+>
+>* will return all related games info and cache them into the database. Use a more accurate name will speed up the search speed.
+>change your store region and language in .env for now. Will add other stores later when all store features are ready
+
+
+#### get games detail from cache
+>GET    /store/getgames
+>
+>* only return already cached games. Background store will auto check cached games and auto update deals info if there is any.
+
 
 ### issue:
 
@@ -165,6 +184,8 @@ Poor error handling. Please start an issue if you can't figure out the problem.
 Process may halt when auto refreshing token.
 
 Messy code.
+
+Some caching function are potencial CPU heavy.
 
 
 ### todo:
