@@ -5,7 +5,9 @@ const Profile = require('../../models/psn/db/proflie');
 
 exports.getProfile = (req, res) => {
     Profile
-        .findById({ _id: req.params.onlineId })
+        .findById({
+            _id: req.params.onlineId
+        })
         .then(result => {
             if (result) {
                 return res.json(result);
@@ -62,4 +64,3 @@ exports.getUserActivities = (req, res) => {
         }
     })
 }
-

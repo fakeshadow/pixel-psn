@@ -1,54 +1,51 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const mongoose = require('mongoose');
+'use strict'
 
-const psnRouter = require('./routes/psn');
-const schedule = require('./util/schedule');
-const errorController = require('./controllers/error');
-const psnTokenController = require('./controllers/psn/tokens');
-const psnStoreController = require('./controllers/psn/store');
+const path = require('path');
+const fastify = require('fastify')();
+const fp = require('fastify-plugin');
+
+const { psnPreHandler } = require('./hooks/psn');
+const PSNService = require('./plugins/psn/service');
+const CacheService = require('./plugins/cache/service')
 
 require('dotenv').config();
 
-const app = express();
+fastify.use(require('morgan')('tiny'));
 
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(multer()
-    .fields([
-        { name: 'threadId', maxCount: 1 },
-        { name: 'message', maxCount: 1 },
-        { name: 'content', maxCount: 1 },
-        { name: 'onlineId', maxCount: 1 },
-        { name: 'type', maxCount: 1 }
-    ]));
+const decorateFastifyInstance = async fastify => {
+    const db = fastify.mongo.db
 
-app.use(psnRouter);
-app.use(errorController.get404);
+    const psnCollection = await db.createCollection('psn');
+    const psnService = new PSNService(psnCollection);
+    const cacheService = new CacheService(fastify.redis);
 
-//get tokens on service start
-psnTokenController.checkToken(boolean => {
-    if (boolean) {
-        return console.log('Got refresh token')
+    fastify
+        .decorate('psnService', psnService)
+        .decorate('cacheService', cacheService)
+        .decorate('authPreHandler', psnPreHandler);
+}
+
+const connectToDatabases = async fastify => {
+    fastify
+        .register(require('fastify-mongodb'), { url: process.env.MONGO, useNewUrlParser: true })
+        .register(require('fastify-redis'), { host: process.env.REDIS_IP, port: process.env.REDIS_PORT, family: 4, password: process.env.REDIS_PASS })
+}
+
+fastify
+    .register(require('fastify-multipart'))
+    .register(require('fastify-static'), { root: path.join(__dirname, 'public'), prefix: '/public/', })
+    .register(fp(connectToDatabases))
+    .register(fp(decorateFastifyInstance))
+    .register(require('./plugins/psn'), { prefix: '/api/psn' })
+
+const start = async () => {
+    try {
+        await fastify.listen(process.env.PORT || 3200, process.env.IP || '127.0.0.1')
+        console.log(`server listening on ${fastify.server.address().port}`)
+    } catch (e) {
+        console.log(e)
+        process.exit(1)
     }
-    console.log('No refresh token Please login');
-})
+}
 
-mongoose
-    .connect(process.env.DATABASE, { useNewUrlParser: true })
-    .then(res => {
-        try {
-            schedule.scheduleJob();
-            psnStoreController.loadStoreItem();
-        } catch (err) {
-            console.log('start up process failed at: ',err);
-        }
-        console.log('Database connected');
-    })
-    .catch(err => console.log('Can not connect to database, Schedule job are not working'));
-
-app.listen(process.env.PORT || 3000, () => console.log('Listening on port: ', process.env.PORT || 3000));
-
-
+start();

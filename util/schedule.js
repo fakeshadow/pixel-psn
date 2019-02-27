@@ -18,7 +18,7 @@ schedule.scheduleJob('1 * * * * *', () => {
         .catch(err => console.log('Failed to update threads list! ' + err));
 })
 
-// use worker every 5 second and queue worker up to deal with rate limit.
+// use worker every 1 second and queue worker up to deal with rate limit.
 schedule.scheduleJob('*/1 * * * * *', () => {
     if (flag.getFlag1() === true) {
         flag.setFalse1();
@@ -51,14 +51,14 @@ delayAndShowErr1 = err => {
     setTimeout(() => {
         flag.setTrue1();
         console.log(err);
-    }, 5000);
+    }, 10000);
 }
 
 delayAndShowErr2 = err => {
     setTimeout(() => {
         flag.setTrue2();
         console.log(err);
-    }, 5000);
+    }, 10000);
 }
 
 module.exports = schedule;

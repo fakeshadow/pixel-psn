@@ -7,7 +7,7 @@ module.exports = class StoreItemCache {
     add() {
         storeItemCache.push(this);
     }
-    static get () {
+    static get() {
         return cutDuplicate(storeItemCache);
     }
 }

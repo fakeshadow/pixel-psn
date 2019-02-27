@@ -11,7 +11,9 @@ exports.getAllThreades = () => {
 	return new Promise((resolve, reject) => {
 		const accessToken = token.getLocalToken();
 		oldThreads(accessToken)
-			.then(threads => threads.map(thread => ({ 'threadId': thread.threadId })))
+			.then(threads => threads.map(thread => ({
+				'threadId': thread.threadId
+			})))
 			.then(async (threadIds) => {
 				ThreadDetail.clear();
 				for (let id of threadIds) {
@@ -119,7 +121,10 @@ sendText = (threadId, message, accessToken) => {
 			}
 		}
 		const form = new formData();
-		form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8', knownLength: form.getLength });
+		form.append('messageEventDetail', JSON.stringify(body), {
+			contentType: 'application/json; charset=utf-8',
+			knownLength: form.getLength
+		});
 		request.post({
 			url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
 			auth: {
@@ -150,12 +155,17 @@ sendImage = (threadId, message, content, accessToken) => {
 			}
 		}
 		const form = new formData();
-		form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
+		form.append('messageEventDetail', JSON.stringify(body), {
+			contentType: 'application/json; charset=utf-8'
+		});
 		/* fork or change the form-data in node_modules/form-data/form-data.js
 			 var header = {
 				'Content-Length': [].concat(contentLength || [])    add this line
 			}*/
-		form.append('imageData', content, { contentType: 'image/png', contentLength: content.length });
+		form.append('imageData', content, {
+			contentType: 'image/png',
+			contentLength: content.length
+		});
 		request.post({
 			url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
 			auth: {
@@ -182,14 +192,19 @@ newThread = (onlineId, accessToken) => {
 	return new Promise((resolve, reject) => {
 		const body = {
 			"threadDetail": {
-				"threadMembers": [
-					{ "onlineId": onlineId },
-					{ "onlineId": process.env.MYID }
+				"threadMembers": [{
+						"onlineId": onlineId
+					},
+					{
+						"onlineId": process.env.MYID
+					}
 				]
 			}
 		}
 		const form = new formData();
-		form.append('threadDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
+		form.append('threadDetail', JSON.stringify(body), {
+			contentType: 'application/json; charset=utf-8'
+		});
 		return request.post({
 			url: `${process.env.MESSAGE_THREAD_API}threads/`,
 			auth: {
@@ -231,7 +246,7 @@ oldThreads = accessToken => {
 detailThread = (threadId, count, accessToken) => {
 	const field = {
 		'fields': 'threadMembers,threadNameDetail,threadThumbnailDetail,threadProperty,latestTakedownEventDetail,newArrivalEventDetail,threadEvents',
-		'count': count   //show upto 100 recent messages from one thread
+		'count': count //show upto 100 recent messages from one thread
 	}
 	return new Promise((resolve, reject) => {
 		request.get({
@@ -248,4 +263,3 @@ detailThread = (threadId, count, accessToken) => {
 		})
 	})
 }
-

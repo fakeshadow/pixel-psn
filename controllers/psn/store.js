@@ -8,7 +8,6 @@ exports.search = (req, res) => {
     searchGame(req.params.gameName)
         .then(rawData => sortGameDetail(rawData.included))
         .then(sortedDetail => {
-            console.log('sorting done');
             sortedDetail.forEach(sorted => {
                 addToStoreCache(sorted.storeItemId);
             })
@@ -51,11 +50,9 @@ exports.loadStoreItem = () => {
             .find()
             .then(items => {
                 if (items) {
-                    items.forEach(item => {
-                        addToStoreCache(item._id);
-                    });
-                    return resolve();
+                    items.forEach(item => addToStoreCache(item._id));
                 }
+                return resolve();
             })
             .catch(err => reject(err));
     })
@@ -64,7 +61,7 @@ exports.loadStoreItem = () => {
 // store items cache
 addToStoreCache = id => {
     const storeItemCache = new StoreItemCache(id);
-    storeItemCache.add();
+    return storeItemCache.add();
 }
 
 // store stuff
@@ -106,8 +103,7 @@ sortGameDetail = async (included) => {
             for (t of temp) {
                 rawDetail.push(t);
             }
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
         }
     }
@@ -125,7 +121,10 @@ saveDetail = detail => {
             .findById(d.storeItemId)
             .then(storeItem => {
                 const prices = d.attributes.skus
-                    .map(sku => ({ 'noPlus': sku.prices['non-plus-user'], 'plus': sku.prices['plus-user'] }))
+                    .map(sku => ({
+                        'noPlus': sku.prices['non-plus-user'],
+                        'plus': sku.prices['plus-user']
+                    }))
                 let price1 = 0;
                 let price2 = 0;
                 let discountRate1 = 0;

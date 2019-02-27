@@ -54,17 +54,10 @@ npm 6.4.1
 >will return a local result if database have cache of this game
 
 #### get all trophies
-<<<<<<< HEAD
-> GET   /trophies/getall/user_psn_id/
+> GET   /trophies/getall/user_psn_id
 >     
 > * Background worker will handle most of the process later.
 >
-=======
-> GET   /trophies/getall/user_psn_id
->     
-> * Background worker will handle most of the work later and the results will cached into database.
-
->>>>>>> 56fd320e157b35c30946d59d0cc78cc5f9835d3d
 
 #### send message
 > POST  /message/send
