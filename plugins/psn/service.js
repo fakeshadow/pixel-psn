@@ -30,7 +30,7 @@ class PSNService {
         return psn.getProfile(onlineId, accessToken.get);
     }
 
-    async getUserTrophySummaryRemote(query) {
+    async getTrophySummaryRemote(query) {
         const { onlineId, npId } = query;
         await this.hasToken();
         const summary = [];
@@ -50,23 +50,35 @@ class PSNService {
         await this.psnCollection.findOneAndUpdate({ npId, tropyList: { $exists: 1 } }, { $set: { onlineId, trophyList: summary } }, { upsert: true })
     }
 
-    async getStoreItemRemote(query) {
-        const { gameName } = query;
-        const { included } = await psn.searchGame(gameName);
-        const ids = included.map(include => ({ gameId: include.id }))
-        const rawGames = await Promise.all(ids.map(async id => {
-            const { included } = await psn.showGameDetail(id.gameId)
-            return included[0]
-        }))
-        const sortedGames = rawGames.map(item => setStoreItemField(item))
-        return sortedGames
+    async getUserTrophiesLocal(query) {
+        const { npCommunicationId, onlineId } = query;
+        const { npId } = await this.psnCollection.findOne({ onlineId, tropyList: { $exists: 0 } });
+        return this.psnCollection.findOne({ npId, npCommunicationId });
     }
 
-    async sendMessageRemonte(query) {
-
+    async getUserTrophiesRemote(query) {
+        const { npCommunicationId, onlineId } = query;
+        const result = await psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
+        return result;
     }
 
-    async getUserLocal(query) {
+    async updateUserTrophiesLocal({ npCommunicationId, trophiesNew }) {
+        const { trophies } = trophiesNew
+        const { comparedUser } = trophies[0];
+        const { npId } = await psn.getProfile(comparedUser.onlineId, accessToken.get);
+        return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies } }, { upsert: true })
+    }
+
+    async sendMessageRemote(query) {
+        const { onlineId, message, content } = query;
+        const threads = await psn.getExistingMessageThreads(accessToken.get);
+
+        // threads.forEach(thread => threadIds.add = thread);
+
+        // return psn.sendMessage({ threadId, message, content, access_token: accessToken.get })
+    }
+
+    async getTrophySummaryLocal(query) {
         const { onlineId } = query;
         // failsafe for onlineId conflict
         const users = await this.psnCollection.find({ onlineId, trophyList: { $exists: 0 } }, { sort: { lastUpdateDate: -1 } }).toArray();
@@ -92,17 +104,42 @@ class PSNService {
         return profile[0]
     }
 
-    async getUserTrophiesLocal(query) {
-        const { npid, onlineId } = query;
-        return this.psnCollection.findOne({ onlineId: onlineId });
-    }
-
     async updateProfileLocal(profile) {
         const { npId } = profile;
         if (!npId) throw new Error('profileData validation failed')
         const profileField = setProfileField(profile);
         const { value } = await this.psnCollection.findOneAndUpdate({ npId: npId }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
         return value
+    }
+
+    async getStoreItemRemote(query) {
+        const { gameName } = query;
+        const { included } = await psn.searchGame(gameName);
+        if (!included.length) throw new Error('nothing found')
+        const ids = included.map(include => ({ gameId: include.id }))
+        const rawGames = await Promise.all(ids.map(async id => {
+            const { included } = await psn.showGameDetail(id.gameId)
+            return included[0]
+        }))
+        const sortedGames = rawGames.map(item => setStoreItemField(item))
+        return sortedGames
+    }
+
+    async getStoreItemLocal(query) {
+        const { gameName } = query;
+        // need to improve regex params.
+        return this.psnCollection.find({ name: { '$regex': gameName, '$options': '$i' } }, { projection: { _id: 0 } }).toArray()
+    }
+
+    async updateStoreItemLocal(items) {
+        const updateOnes = [];
+        items.forEach(item => {
+            const { id, ...others } = item
+            updateOnes.push({
+                updateOne: { filter: { id }, update: { id, ...others }, upsert: true }
+            })
+        })
+        return this.psnCollection.bulkWrite(updateOnes);
     }
 
     async hasToken() {
@@ -126,6 +163,23 @@ const accessToken = {
     },
     set set(token) {
         this.accessToken = token;
+    }
+}
+
+const threadIds = {
+    threadIds: [],
+    get get() {
+        return this.threadIds
+    },
+    set add(thread) {
+        return this.threadIds.push(thread);
+    },
+    set remove(id) {
+        for (let i = 0; i < this.threadIds.length; i++) {
+            if (this.threadIds[i].id === id) {
+                this.threadIds.splice(i, 1)
+            }
+        }
     }
 }
 
@@ -153,8 +207,8 @@ function setStoreItemField(item) {
     let originalPrice1 = 0;
     let originalPrice2 = 0;
     let startDate1 = null;
-    let startDate2 = null;
-    let endDate1 = null;
+    let startDate2 = null
+    let endDate1 = null
     let endDate2 = null;
     for (let p of prices) {
         if (p.noPlus['discount-percentage'] == 0 && p.plus['discount-percentage'] == 0) {

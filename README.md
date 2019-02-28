@@ -35,31 +35,27 @@ npm 6.4.1
 >
 > 'uuId': 'The uuId you get from above tutorial'
 >
-> 'twoFA': 'as above'
+> 'tFA': 'as above'
 >
 > 'password': your admin password 
 
 
-#### get profile                       
+#### get profile with trophy summary                    
 > GET   /api/psn/user_psn_id
 
 
-#### get trophy summary
-> GET   /trophy/start_number/limit_number/user_psn_id
->
->will return a local result if database have the complete cache and start&&limit numbers are not used
-
-
 #### get trophy by game
-> GET   /trophies/getgame/user_psn_id/user_npId/game_npId
+> POST   /api/psn/trophy
 >
->will return a local result if database have cache of this game
+> * accept json body (set your post header 'Content-Type' to 'application/json')
+>
+> Required keys and values:  
+>
+> 'npCommunicationId': 'NPWRXXXXX_00'
+>
+> 'onlineId': 'user onlineId'
+>
 
-#### get all trophies
-> GET   /trophies/getall/user_psn_id
->     
-> * Background worker will handle most of the process later.
->
 
 #### send message
 > POST  /message/send
@@ -77,6 +73,7 @@ npm 6.4.1
 > 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
 >
 > *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
+
 
 #### send message direct to onlineId
 > POST  /message/send/direct
@@ -101,7 +98,7 @@ npm 6.4.1
 #### recieve messages
 >POST   /message/receive
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> 
 >
 > Required keys and values:  
 >
@@ -153,34 +150,17 @@ npm 6.4.1
 > 'type': 'feed or news'
 
 
-#### find store items:
->GET    /store/search/item_name
+#### find games from store  - will return a cached value after the first time
+>GET    /api/psn/store/gameName
 >
->* will return all related games info and cache them into the database. Use a more accurate name will speed up the search speed.
->change your store region and language in .env for now. Will add other stores later when all store features are ready
-
-
-#### get games detail from cache
->GET    /store/getgames
->
->* only return already cached games. Background store will auto check cached games and auto update deals info if there is any.
 
 
 ### issue:
 
-JS is async by nature so it's very easy to throttle your PSN API by accident. Be ware that happen and restart the app when you are at it.
-
-Your refresh token is stored in token/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
 
 Refresh token may expire and you have to login again manually.
 
-Poor error handling. Please start an issue if you can't figure out the problem.
-
 Process may halt when auto refreshing token.
-
-Messy code.
-
-Some caching function are potencial CPU heavy.
 
 
 ### todo:

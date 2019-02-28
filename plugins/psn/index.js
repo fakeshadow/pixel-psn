@@ -2,15 +2,18 @@
 
 const {
     adminLogin: adminSchema,
-    profileSchema: profileSchema
+    getProfile: getProfileSchema,
+    getGame: getGameSchema,
+    getTrophy: getTrophySchema
 } = require('./schemas')
 
 module.exports = async (fastify, opts) => {
 
     fastify
-        .get('/store/:gameName', searchStoreHandler)
-        .get('/:onlineId', { schema: profileSchema }, getProfileHandler)
-        .get('/test/:onlineId', testGetSummary)
+        .get('/', testHandler)
+        .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
+        .get('/store/:gameName', { schema: getGameSchema }, searchStoreHandler)
+        .post('/trophy', { schema: getTrophySchema }, userTrophyHandler)
 
     fastify.register(async function (fastify) {
         fastify
@@ -31,24 +34,38 @@ module.exports[Symbol.for('plugin-meta')] = {
     }
 }
 
-async function searchStoreHandler(req, reply) {
-    const gameName = req.params.gameName;
-    return this.psnService.getStoreItemRemote({gameName});
+async function testHandler(req, reply) {
+    // await this.psnService.refreshAccessToken();
+    return this.psnService.sendMessageRemote(req);
 }
 
-async function testGetSummary(req, reply) {
-    const onlineId = req.params.onlineId
-    await this.psnService.refreshAccessToken();
-    const profile = await this.psnService.getPSNProfileRemote({ onlineId });
-    return this.psnService.updateProfileLocal(profile);
+async function userTrophyHandler(req, reply) {
+    const { npCommunicationId, onlineId } = req.body;
+    // await this.psnService.refreshAccessToken();
+    const cached = await this.psnService.getUserTrophiesLocal({ npCommunicationId, onlineId });
+    if (cached) return cached;
+    const trophiesNew = await this.psnService.getUserTrophiesRemote({ npCommunicationId, onlineId });
+    await this.psnService.updateUserTrophiesLocal({ npCommunicationId, trophiesNew });
+    return trophiesNew;
+}
 
+async function searchStoreHandler(req, reply) {
+    const gameName = req.params.gameName;
+    const itemsCache = await this.psnService.getStoreItemLocal({ gameName })
+    if (itemsCache.length) return itemsCache;
+    const itemsNew = await this.psnService.getStoreItemRemote({ gameName });
+    await this.psnService.updateStoreItemLocal(itemsNew);
+    return itemsNew;
 }
 
 async function getProfileHandler(req, reply) {
     const onlineId = req.params.onlineId
-    const profile = await this.psnService.getUserLocal({ onlineId })
-    if (profile) return profile;
-    return this.psnService.getPSNProfileRemote({ onlineId });
+    const profileLocal = await this.psnService.getTrophySummaryLocal({ onlineId })
+    if (profileLocal) return profileLocal
+    const profile = await this.psnService.getPSNProfileRemote({ onlineId });
+    await this.psnService.updateProfileLocal(profile);
+    await this.psnService.getTrophySummaryRemote(profile);
+    return profile;
 }
 
 async function adminHandler(req, reply) {

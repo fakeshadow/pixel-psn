@@ -9,20 +9,20 @@ class PSN {
         return getToken(grantcode);
     }
 
-    getProfile(onlineId, accessToken) {
+    getProfile(onlineId, access_token) {
         const fields = {
             'fields': '@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary',
         }
         const option = {
             url: `${process.env.USERS_API}${onlineId}/profile?` + qs.stringify(fields),
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         }
         return http.get(option);
     }
 
-    getIndividualGame(npCommunicationId, onlineId, accessToken) {
+    getIndividualGame(npCommunicationId, onlineId, access_token) {
         const fields = {
             'fields': '@default,trophyRare,trophyEarnedRate',
             'npLanguage': 'en',
@@ -31,13 +31,13 @@ class PSN {
         const option = {
             url: `${process.env.USER_TROPHY_API}/${npCommunicationId}/trophyGroups/all/trophies?` + qs.stringify(fields),
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         }
         return http.get(option);
     }
 
-    getSummary(offset, onlineId, accessToken) {
+    getSummary(offset, onlineId, access_token) {
         const fields = {
             'fields': '@default',
             'npLanguage': 'en',
@@ -50,23 +50,23 @@ class PSN {
         const option = {
             url: `${process.env.USER_TROPHY_API}?` + qs.stringify(fields),
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         }
         return http.get(option);
     }
 
-    getExistingMessageThreads(accessToken) {
+    getExistingMessageThreads(access_token) {
         const option = {
             url: `${process.env.MESSAGE_THREAD_API}threads/`,
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         };
         return http.get(option);
     }
 
-    getThreadDetail(threadId, count, accessToken) {
+    getThreadDetail(threadId, count, access_token) {
         const field = {
             'fields': 'threadMembers,threadNameDetail,threadThumbnailDetail,threadProperty,latestTakedownEventDetail,newArrivalEventDetail,threadEvents',
             'count': count //show upto 100 recent messages from one thread
@@ -74,26 +74,26 @@ class PSN {
         const option = {
             url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}?` + qs.stringify(field),
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         };
         return http.get(option)
     }
 
-    sendMessage({ threadId, message, content, accessToken }) {
-        if (content) return sendImage(threadId, message, content, accessToken);
-        if (message && !content) return sendText(threadId, message, accessToken);
+    sendMessage({ threadId, message, content, access_token }) {
+        if (content) return sendImage(threadId, message, content, access_token);
+        if (message && !content) return sendText(threadId, message, access_token);
         return null;
     }
 
-    generateNewMessageThread(onlineId, accessToken) {
+    generateNewMessageThread(onlineId, access_token) {
         const body = { "threadDetail": { "threadMembers": [{ "onlineId": onlineId }, { "onlineId": process.env.MYID }] } }
         const form = new formData();
         form.append('threadDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
         const option = {
             url: `${process.env.MESSAGE_THREAD_API}threads/`,
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             },
             headers: {
                 'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
@@ -103,11 +103,11 @@ class PSN {
         return http.post(option);
     }
 
-    leaveMessageThread(threadId, accessToken) {
+    leaveMessageThread(threadId, access_token) {
         const option = {
             url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/users/me`,
             auth: {
-                'bearer': `${accessToken}`
+                'bearer': `${access_token}`
             }
         }
         return http.del(option)
@@ -207,24 +207,24 @@ const getNpsso = (uuid, tfa) => {
     return http.post(option);
 }
 
-const sendText = (threadId, message, accessToken) => {
+const sendText = (threadId, message, access_token) => {
     const body = { "messageEventDetail": { "eventCategoryCode": 1, "messageDetail": { "body": message } } }
     const form = new formData();
     form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8', knownLength: form.getLength });
     const option = {
         url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
         auth: {
-            'bearer': `${accessToken}`
+            'bearer': `${access_token}`
         },
         headers: {
             'Content-Type': `multipart/form-data; boundary=${form._boundary}`,
         },
         body: form
     };
-    return http.post(sendText);
+    return http.post(option);
 }
 
-const sendImage = (threadId, message, content, accessToken) => {
+const sendImage = (threadId, message, content, access_token) => {
     const body = { "messageEventDetail": { "eventCategoryCode": 3, "messageDetail": { "body": message } } }
     const form = new formData();
     form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
@@ -236,7 +236,7 @@ const sendImage = (threadId, message, content, accessToken) => {
     const option = {
         url: `${process.env.MESSAGE_THREAD_API}threads/${threadId}/messages`,
         auth: {
-            'bearer': `${accessToken}`
+            'bearer': `${access_token}`
         },
         headers: {
             'Content-Type': `multipart/form-data; boundary=${form._boundary}`

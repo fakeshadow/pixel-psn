@@ -6,7 +6,7 @@ function post(option) {
     return new Promise((resolve, reject) => {
         request.post(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
-            if (parsedBody.error) return reject(error);
+            if (parsedBody.error) return reject(parsedBody.error);
             if (err) return reject(JSON.parse(err));
             resolve(parsedBody);
         })
@@ -17,7 +17,7 @@ function get(option) {
     return new Promise((resolve, reject) => {
         request.get(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
-            if (parsedBody.error) return reject(error);
+            if (parsedBody.error) return reject(parsedBody.error);
             if (err) return reject(JSON.parse(err));
             resolve(parsedBody);
         })
@@ -28,7 +28,7 @@ function getResponseHeader(option) {
     return new Promise((resolve, reject) => {
         request.get(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
-            if (parsedBody.error) return reject(error);
+            if (parsedBody.error) return reject(parsedBody.error);
             if (err) return reject(JSON.parse(err));
             resolve(response.headers['x-np-grant-code']);
         })
