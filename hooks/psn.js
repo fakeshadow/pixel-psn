@@ -14,8 +14,15 @@ const psnPreHandler = async (req, res) => {
         //     throw new Error();
         // }
         const { password } = req.body;
-        if (password === null || undefined) return;
-        if (password !== process.env.ADMIN_PASS) throw new Error('unauthorized admin request');
+        if (password && password !== process.env.ADMIN_PASS) throw new Error('unauthorized admin request');
+    } catch (e) {
+        res.send(e)
+    }
+}
+
+const preSerialization = async (req, res) => {
+    try {
+
     } catch (e) {
         res.send(e)
     }

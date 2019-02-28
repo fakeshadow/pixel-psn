@@ -1,36 +1,5 @@
-const request = require('request');
-const qs = require('qs');
-const token = require('./tokens');
-const Profile = require('../../models/psn/db/proflie');
 
-exports.getProfile = (req, res) => {
-    Profile
-        .findById({
-            _id: req.params.onlineId
-        })
-        .then(result => {
-            if (result) {
-                return res.json(result);
-            }
-            const accessToken = token.getLocalToken();
-            const fields = {
-                'fields': '@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary',
-            }
-            request.get({
-                url: `${process.env.USERS_API}${req.params.onlineId}/profile?` + qs.stringify(fields),
-                auth: {
-                    'bearer': `${accessToken}`
-                }
-            }, (err, response, body) => {
-                if (err) {
-                    res.json(JSON.parse(err));
-                } else {
-                    res.json(JSON.parse(body));
-                }
-            })
-        })
-        .catch(err => res.json(err));
-}
+
 
 exports.getUserActivities = (req, res) => {
     const body = {

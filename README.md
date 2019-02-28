@@ -27,19 +27,21 @@ npm 6.4.1
 
 
 #### login 
-> POST   /login
+> POST   /api/psn/admin
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept json body (set your post header 'Content-Type' to 'application/json')
 >
 > Required keys and values:  
 >
 > 'uuId': 'The uuId you get from above tutorial'
 >
 > 'twoFA': 'as above'
+>
+> 'password': your admin password 
 
 
-#### get profile                                 
-> GET   /profile/user_psn_id
+#### get profile                       
+> GET   /api/psn/user_psn_id
 
 
 #### get trophy summary

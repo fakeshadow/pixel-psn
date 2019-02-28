@@ -1,13 +1,39 @@
 'use strict'
 
+const earnedTrophiesObject = {
+    type: 'object',
+    properties: {
+        platinum: {
+            type: 'number'
+        },
+        gold: {
+            type: 'number'
+        },
+        silver: {
+            type: 'number'
+        },
+        bronze: {
+            type: 'number'
+        },
+    },
+    additionalProperties: false
+}
+
 const gameObject = {
     type: 'object',
-    require: []
+    require: [],
+    properties: {
+        npCommunicationId: { type: 'string' },
+        progress: { type: 'number' },
+        earnedTrophies: earnedTrophiesObject,
+        lastUpdateDate: { type: 'string' }
+    },
+    additionalProperties: false
 }
 
 const profileObject = {
     type: 'object',
-    require: ['games', 'onlineId', 'region', 'avatarUrl', 'trophySummary', 'lastUpdateTime'],
+    require: [],
     properties: {
         games: {
             type: 'array',
@@ -16,14 +42,29 @@ const profileObject = {
         onlineId: {
             type: 'string'
         },
+        npId: {
+            type: 'string'
+        },
         region: {
             type: 'string'
         },
         avatarUrl: {
             type: 'string'
         },
+        aboutMe: {
+            type: 'string'
+        },
+        languagesUsed: {
+            type: 'array',
+            items: {
+                type: 'string'
+            }
+        },
         lastUpdateTime: {
             type: 'string'
+        },
+        plus: {
+            type: 'number'
         },
         trophySummary: {
             type: 'object',
@@ -34,26 +75,11 @@ const profileObject = {
                 progress: {
                     type: 'number'
                 },
-                earnedTrophies: {
-                    type: 'object',
-                    properties: {
-                        platinum: {
-                            type: 'number'
-                        },
-                        gold: {
-                            type: 'number'
-                        },
-                        silver: {
-                            type: 'number'
-                        },
-                        bronze: {
-                            type: 'number'
-                        },
-                    }
-                }
+                earnedTrophies: earnedTrophiesObject
             }
         }
-    }
+    },
+    additionalProperties: false
 }
 
 const adminLogin = {
@@ -77,19 +103,19 @@ const adminLogin = {
 }
 
 const profileSchema = {
-    body: {
-        type: 'object',
-        require: ['npid', 'psnid'],
-        properties: {
-            npid: {
-                type: 'string'
-            },
-            psnid: {
-                type: 'string'
-            }
-        },
-        additionalProperties: false
-    },
+    // body: {
+    //     type: 'object',
+    //     require: ['psnid'],
+    //     properties: {
+    //         npid: {
+    //             type: 'string'
+    //         },
+    //         psnid: {
+    //             type: 'string'
+    //         }
+    //     },
+    //     additionalProperties: false
+    // },
     response: {
         200: profileObject
     }

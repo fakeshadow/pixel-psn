@@ -1,42 +1,52 @@
+'use strict'
+
 const request = require('request')
 
-class HttpClient {
-
-    post(option) {
-        return new Promise((resolve, reject) => {
-            request.post(option, (err, response, body) => {
-                if (err) {
-                    reject(JSON.parse(err));
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            })
+function post(option) {
+    return new Promise((resolve, reject) => {
+        request.post(option, (err, response, body) => {
+            const parsedBody = JSON.parse(body);
+            if (parsedBody.error) return reject(error);
+            if (err) return reject(JSON.parse(err));
+            resolve(parsedBody);
         })
-    }
-
-    get(option) {
-        return new Promise((resolve, reject) => {
-            request.get(option, (err, response, body) => {
-                if (err) {
-                    reject(JSON.parse(err));
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            })
-        })
-    }
-
-    getResponseHeader(option, header) {
-        return new Promise((resolve, reject) => {
-            request.get(option, (err, response, body) => {
-                if (err) {
-                    reject(JSON.parse(err));
-                } else {
-                    resolve(header);
-                }
-            })
-        })
-    }
+    })
 }
 
-module.exports = HttpClient;
+function get(option) {
+    return new Promise((resolve, reject) => {
+        request.get(option, (err, response, body) => {
+            const parsedBody = JSON.parse(body);
+            if (parsedBody.error) return reject(error);
+            if (err) return reject(JSON.parse(err));
+            resolve(parsedBody);
+        })
+    })
+}
+
+function getResponseHeader(option) {
+    return new Promise((resolve, reject) => {
+        request.get(option, (err, response, body) => {
+            const parsedBody = JSON.parse(body);
+            if (parsedBody.error) return reject(error);
+            if (err) return reject(JSON.parse(err));
+            resolve(response.headers['x-np-grant-code']);
+        })
+    })
+}
+
+function del(option) {
+    return new Promise((resolve, reject) => {
+        request.delete(option, (err, response, body) => {
+            if (err) return reject(err);
+            resolve('success');
+        })
+    })
+}
+
+module.exports = {
+    post,
+    get,
+    del,
+    getResponseHeader
+};
