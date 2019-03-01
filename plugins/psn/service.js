@@ -36,6 +36,7 @@ class PSNService {
         const summary = [];
         let offset = 0;
         let total = 0;
+
         do {
             const { totalResults, trophyTitles } = await psn.getSummary(offset, onlineId, accessToken.get);
             trophyTitles.forEach(list => summary.push({
@@ -47,13 +48,14 @@ class PSNService {
             total = totalResults;
             offset += 100;
         } while (offset <= total && total > 100)
+
         await this.psnCollection.findOneAndUpdate({ npId, tropyList: { $exists: 1 } }, { $set: { onlineId, trophyList: summary } }, { upsert: true })
     }
 
     async getUserTrophiesLocal(query) {
         const { npCommunicationId, onlineId } = query;
-        const { npId } = await this.psnCollection.findOne({ onlineId, tropyList: { $exists: 0 } });
-        return this.psnCollection.findOne({ npId, npCommunicationId });
+        const { npId } = await this.psnCollection.findOne({ onlineId, tropyList: { $exists: 0 } }, { projection: { _id: 0 } });
+        return this.psnCollection.findOne({ npId, npCommunicationId }, { projection: { _id: 0 } });
     }
 
     async getUserTrophiesRemote(query) {
@@ -69,13 +71,25 @@ class PSNService {
         return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies } }, { upsert: true })
     }
 
-    async sendMessageRemote(query) {
-        const { onlineId, message, content } = query;
-        const threads = await psn.getExistingMessageThreads(accessToken.get);
+    async sendMessageRemote(req) {
+        try {
+            if (req.body) {
+                const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+                if (!threadId) throw new Error('failed to generate new thread')
+                const { message, onlineId } = req.body;
+                return psn.sendMessage(threadId, message, null, accessToken.get);
+            }
+            return multipart(req);
+        } catch (e) {
+            throw e
+        }
+    }
 
-        // threads.forEach(thread => threadIds.add = thread);
-
-        // return psn.sendMessage({ threadId, message, content, access_token: accessToken.get })
+    async getMessageRemote(query) {
+        const { onlineId } = query;
+        const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+        if (!threadId) throw new Error('failed to generate new thread')
+        return psn.getThreadDetail(threadId, 20, accessToken.get);
     }
 
     async getTrophySummaryLocal(query) {
@@ -101,6 +115,7 @@ class PSNService {
             },
             { $project: { _id: 0 } }
         ]).toArray()
+
         return profile[0]
     }
 
@@ -109,19 +124,23 @@ class PSNService {
         if (!npId) throw new Error('profileData validation failed')
         const profileField = setProfileField(profile);
         const { value } = await this.psnCollection.findOneAndUpdate({ npId: npId }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
+
         return value
     }
 
     async getStoreItemRemote(query) {
         const { gameName } = query;
         const { included } = await psn.searchGame(gameName);
+
         if (!included.length) throw new Error('nothing found')
+
         const ids = included.map(include => ({ gameId: include.id }))
         const rawGames = await Promise.all(ids.map(async id => {
             const { included } = await psn.showGameDetail(id.gameId)
             return included[0]
         }))
         const sortedGames = rawGames.map(item => setStoreItemField(item))
+
         return sortedGames
     }
 
@@ -166,21 +185,51 @@ const accessToken = {
     }
 }
 
-const threadIds = {
-    threadIds: [],
-    get get() {
-        return this.threadIds
-    },
-    set add(thread) {
-        return this.threadIds.push(thread);
-    },
-    set remove(id) {
-        for (let i = 0; i < this.threadIds.length; i++) {
-            if (this.threadIds[i].id === id) {
-                this.threadIds.splice(i, 1)
+
+function multipart(req) {
+    return new Promise((resolve, reject) => {
+        const options = {
+            limits: {
+                fieldNameSize: 100,
+                fieldSize: 1000000,
+                fields: 10,
+                fileSize: 1000000,
+                files: 5,
+                headerPairs: 2000
+            }
+        };
+        const mp = req.multipart(handler, done, options);
+        mp.on('partsLimit', () => reject({
+            'error': 'Maximum number of form parts reached'
+        }));
+        mp.on('filesLimit', () => reject({
+            'error': 'Maximum number of files reached'
+        }));
+        mp.on('fieldsLimit', () => reject({
+            'error': 'Maximim number of fields reached'
+        }));
+
+        async function handler(field, file, filename, encoding, mimetype) {
+            try {
+                const array = field.split(':')
+                const onlineId = array[0];
+                const message = array[1];
+                const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+                console.log(file)
+                if (!threadId) throw new Error('failed to generate new thread')
+                await psn.sendMessage(threadId, message, file, accessToken.get);
+            } catch (e) {
+                throw e
             }
         }
-    }
+
+        function done(err) {
+            if (err) {
+                return reject(err)
+            };
+            resolve();
+        }
+    })
 }
 
 function setProfileField(profile) {

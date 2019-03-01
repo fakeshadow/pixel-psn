@@ -2,6 +2,8 @@
 
 const qs = require('querystring');
 const http = require('./httpClient');
+const formData = require('form-data')
+
 class PSN {
     async getAcceeToken(uuid, tfa) {
         const { npsso } = await getNpsso(uuid, tfa);
@@ -80,7 +82,7 @@ class PSN {
         return http.get(option)
     }
 
-    sendMessage({ threadId, message, content, access_token }) {
+    sendMessage(threadId, message, content, access_token) {
         if (content) return sendImage(threadId, message, content, access_token);
         if (message && !content) return sendText(threadId, message, access_token);
         return null;
@@ -111,6 +113,34 @@ class PSN {
             }
         }
         return http.del(option)
+    }
+
+    getUserActivities(onlineId, type, page, access_token) {
+
+        const body = {
+            includeComments: true,
+            offset: 0,
+            blockSize: 10
+        }
+        const accessToken = token.getLocalToken();
+        const option = {
+            url: `${process.env.ACTIVITY_API}v1/users/${onlineId}/${type}/${page}?` + qs.stringify(body),
+            auth: {
+                'bearer': `${access_token}`
+            },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            // body: qs.stringify({
+            //     filters: PLAYED_GAME,
+            //     filters: TROPHY,
+            //     includeComments: false,
+            //     offset: 1,
+            //     blockSize: 5
+            // }),
+            gzip: true
+        }
+        return http.get(option)
     }
 
     searchGame(name) {
@@ -225,6 +255,7 @@ const sendText = (threadId, message, access_token) => {
 }
 
 const sendImage = (threadId, message, content, access_token) => {
+    console.log(content.length)
     const body = { "messageEventDetail": { "eventCategoryCode": 3, "messageDetail": { "body": message } } }
     const form = new formData();
     form.append('messageEventDetail', JSON.stringify(body), { contentType: 'application/json; charset=utf-8' });
@@ -243,5 +274,5 @@ const sendImage = (threadId, message, content, access_token) => {
         },
         body: form,
     };
-    return http.post(option);
+    return http.post(option).catch(e=>console.log(e))
 }

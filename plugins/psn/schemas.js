@@ -163,7 +163,7 @@ const storeGameObject = {
         subTitles: { type: 'array', items: { type: 'string' } },
         thumbNail: { type: 'string' },
         history: priceObject,
-        // mediaList: mediaListObject,
+        mediaList: mediaListObject,
         prices: priceObject,
     },
     additionalProperties: false
@@ -275,8 +275,129 @@ const getGame = {
     }
 }
 
+const getMessage = {
+    params: {
+        type: 'object',
+        required: ['onlineId'],
+        properties: {
+            onlineId: {
+                type: 'string'
+            }
+        }
+    },
+    response: {
+        200: {
+            type: 'object',
+            nullable: true,
+            properties: {
+                threadMembers: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            accountId: {
+                                type: 'string'
+                            },
+                            onlineId: {
+                                type: 'string'
+                            }
+                        }
+                    }
+                },
+                threadNameDetail: {
+                    type: 'object',
+                    properties: {
+                        status: { type: 'number' },
+                        threadName: { type: 'string' },
+                    }
+                },
+                threadThumbnailDetail: {
+                    type: 'object',
+                    properties: {
+                        status: { type: 'number' },
+                    }
+                },
+                threadProperty: {
+                    type: 'object',
+                    properties: {
+                        favoriteDetail: {
+                            type: 'object',
+                            properties: {
+                                favoriteFlag: { type: 'boolean' }
+                            }
+                        },
+                        favoriteDetail: {
+                            type: 'object',
+                            properties: {
+                                pushNotificationFlag: { type: 'boolean' }
+                            }
+                        },
+                        favoriteDetail: {
+                            type: 'object',
+                            properties: {
+                                kickoutFlag: { type: 'boolean' }
+                            }
+                        },
+                        favoriteDetail: {
+                            type: 'object',
+                            properties: {
+                                threadJoinDate: { type: 'string' }
+                            }
+                        }
+                    }
+                },
+                newArrivalEventDetail: {
+                    type: 'object',
+                    properties: {
+                        newArrivalEventFlag: { type: 'string' }
+                    }
+                },
+                threadEvents: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            messageEventDetail: {
+                                type: 'object',
+                                properties: {
+                                    eventIndex: { type: 'string' },
+                                    postDate: { type: 'string' },
+                                    eventCategoryCode: { type: 'number' },
+                                    altEventCategoryCode: { type: 'number' },
+                                    sender: {
+                                        type: 'object',
+                                        properties: {
+                                            accountId: { type: 'number' },
+                                            onlineId: { type: 'string' },
+                                        }
+                                    },
+                                    messageDetail: {
+                                        type: 'object',
+                                        properties: {
+                                            body: { type: 'string' },
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "threadId": { type: 'string' },
+                "threadType": { type: 'number' },
+                "threadModifiedDate": { type: 'string' },
+                "resultsCount": { type: 'number' },
+                "maxEventIndexCursor": { type: 'string' },
+                "sinceEventIndexCursor": { type: 'string' },
+                "latestEventIndex": { type: 'string' },
+                "endOfThreadEvent": { type: 'boolean' },
+            }
+        }
+    }
+}
+
 module.exports = {
     adminLogin,
     getProfile,
-    getGame
+    getGame,
+    getMessage
 }

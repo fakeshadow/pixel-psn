@@ -7,7 +7,7 @@ function post(option) {
         request.post(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
             if (parsedBody.error) return reject(parsedBody.error);
-            if (err) return reject(JSON.parse(err));
+            if (err) return reject(err);
             resolve(parsedBody);
         })
     })
@@ -18,7 +18,7 @@ function get(option) {
         request.get(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
             if (parsedBody.error) return reject(parsedBody.error);
-            if (err) return reject(JSON.parse(err));
+            if (err) return reject(err);
             resolve(parsedBody);
         })
     })
@@ -29,7 +29,7 @@ function getResponseHeader(option) {
         request.get(option, (err, response, body) => {
             const parsedBody = JSON.parse(body);
             if (parsedBody.error) return reject(parsedBody.error);
-            if (err) return reject(JSON.parse(err));
+            if (err) return reject(err);
             resolve(response.headers['x-np-grant-code']);
         })
     })

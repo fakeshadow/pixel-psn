@@ -8,16 +8,17 @@
 	},
 	"contributors": [],
 	"dependencies": {
+		"dotenv": "^6.2.0",
 		"fastify": "git+https://github.com/fastify/fastify.git",
 		"fastify-mongodb": "^1.0.1",
 		"fastify-multipart": "^0.7.0",
 		"fastify-plugin": "^1.5.0",
 		"fastify-redis": "^3.0.0",
 		"fastify-static": "^2.3.4",
+		"form-data": "^2.3.3",
 		"morgan": "^1.9.1",
-		"turbo-json-parse": "^2.3.0",
-		"dotenv": "^6.2.0",
-		"request": "^2.88.0"
+		"request": "^2.88.0",
+		"turbo-json-parse": "^2.3.0"
 	},
 	"scripts": {
 		"start": "node app.js",
