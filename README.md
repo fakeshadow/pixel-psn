@@ -14,7 +14,7 @@ npm 6.4.1
 
 4. npm start
 
-### Addtional Setup:
+### database Setup:
 1. install mongoDB
 
 2. create a databse called "psn" and setup a user password for it.
@@ -27,109 +27,61 @@ npm 6.4.1
 
 
 #### login 
-> POST   /login
+> POST   /api/psn/admin
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept json body (set your post header 'Content-Type' to 'application/json')
 >
 > Required keys and values:  
 >
 > 'uuId': 'The uuId you get from above tutorial'
 >
-> 'twoFA': 'as above'
-
-
-#### get profile                                 
-> GET   /profile/user_psn_id
-
-
-#### get trophy summary
-> GET   /trophy/start_number/limit_number/user_psn_id
+> 'tfA': 'as above'
 >
->will return a local result if database have the complete cache and start&&limit numbers are not used
+> 'password': your admin password 
+
+
+#### get profile with trophy summary                    
+> GET   /api/psn/user_psn_id
 
 
 #### get trophy by game
-> GET   /trophies/getgame/user_psn_id/user_npId/game_npId
+> POST   /api/psn/trophy
 >
->will return a local result if database have cache of this game
-
-#### get all trophies
-> GET   /trophies/getall/user_psn_id
->     
-> * Background worker will handle most of the work later and the results will cached into database.
+> * accept json body (set your post header 'Content-Type' to 'application/json')
+>
+> Required keys and values:  
+>
+> 'npCommunicationId': 'NPWRXXXXX_00'
+>
+> 'onlineId': 'user onlineId'
+>
 
 
 #### send message
-> POST  /message/send
+> POST /api/psn/message
 >
-> * accept multipart/form-data (set your post header 'Content-Type' to 'multipart/form-data')
->
+> * accept multipart for image sending (set your post header 'Content-Type' to 'multipart/form-data')
+> * accept json body for message sending(set your post header 'Content-Type' to 'multipart/form-data')
 > Required keys and values:  
 >
-> 'threadId': 'The threadId you want to post message to'
+> text message:
+>>'onlineId': 'The threadId you want to post message to'
+>>
+>>'message': 'The text content of your message'
 >
-> 'message': 'The text content of your message'
->
-> 'content': 'put your data here. leave it blank if you only send text message'
->
-> 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
->
-> *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
-
-#### send message direct to onlineId
-> POST  /message/send/direct
-> 
-> * usually it's not optimal to send message directly. As you may form more threads than you need to and make managing and caching harder.
-> mostly the same as regular send message. Using local memory cache to decide if a new thread need to be found. It may introduce some errors but will save some api calls.
->
-> Required keys and values:  
->
-> 'onlineId': 'The onlineId you want to post message to' (id need to be exact match including uper lower caps and symbos)
->
-> 'message': 'The text content of your message'
->
-> 'content': 'put your data here. leave it blank if you only send text message'
->
-> 'type': '1-4' (1.text; 2.image; 3.audio; 4.sticker?)  
->
-> *only type 1 and 2 support for now.(image size is limited to near 20kb png form.)
-
+> image message:
+>> form data key:   'onlineId:message'
+>> form data: png file
 
 
 #### recieve messages
->POST   /message/receive
->
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
->
-> Required keys and values:  
->
-> 'threadId': 'The threadId you want to get messages from'
->
-> 'count': 'The count of messages you want to receive' (limit is set to 100)
-
-
-#### check message
->GET    /message/new
->
->auto update threads lastmodified date per minute.
-
-
-#### cross find thread or people
->POST   /message/find
->
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
->
-> Accept keys and values(*Doesn't accept both):  
->
-> 'threadId': 'find all members' Id in that thread'
->
-> 'onlineId': 'find all threads this onlineId is in' (id need to be exact match including uper lower caps and symbos)
+>GET   /api/psn/message/:onlineID
 
 
 #### leave a message thread
->POST   /message/leave
+>DELETE   /api/psn/message
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded')
+> * accept json body (set your post header 'Content-Type' to 'application/json')
 >
 > Accept keys and values:  
 >
@@ -137,48 +89,21 @@ npm 6.4.1
 
 
 #### get user activities
->POST   /profile/activity        
+>GET   /api/psn/activity/:onlineId        (not working for now)
 >
-> * accept urlencoded body (set your post header 'Content-Type' to 'application/x-www-form-urlencoded').
->currently have bug and can only retrive the right result on the first try.
->
-> Accept keys and values:  
->
-> 'onlineId': 'the user you want to check activities'
->
-> 'page': 'start with 1'
->
-> 'type': 'feed or news'
 
 
-#### find store items:
->GET    /store/search/item_name
+#### find games from store  - will return a cached value after the first time
+>GET    /api/psn/store/:gameName
 >
->* will return all related games info and cache them into the database. Use a more accurate name will speed up the search speed.
->change your store region and language in .env for now. Will add other stores later when all store features are ready
-
-
-#### get games detail from cache
->GET    /store/getgames
->
->* only return already cached games. Background store will auto check cached games and auto update deals info if there is any.
 
 
 ### issue:
 
-JS is async by nature so it's very easy to throttle your PSN API by accident. Be ware that happen and restart the app when you are at it.
-
-Your refresh token is stored in token/tokens.json. It's safe to disable cert.save() function if you don't feel like to store it.
-
 Refresh token may expire and you have to login again manually.
-
-Poor error handling. Please start an issue if you can't figure out the problem.
 
 Process may halt when auto refreshing token.
 
-Messy code.
-
-Some caching function are potencial CPU heavy.
 
 
 ### todo:
