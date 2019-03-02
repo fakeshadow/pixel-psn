@@ -83,10 +83,11 @@ async function searchStoreHandler(req, reply) {
 
 async function getProfileHandler(req, reply) {
     const onlineId = req.params.onlineId
-    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
+    await this.psnService.refreshAccessToken();
+    // const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
 
-    const date = new Date();
-    if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
+    // const date = new Date();
+    // if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
 
     const profile = await this.psnService.getPSNProfileRemote({ onlineId });
     await this.psnService.updateProfileLocal(profile);

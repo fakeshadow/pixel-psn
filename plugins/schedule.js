@@ -30,6 +30,6 @@ module.exports = fp(function (fastify, opts, next) {
 
     next()
 }, {
-        fastify: '>=0.39.1',
+        fastify: '>=1.0.0',
         name: 'fastify-schedule'
     })

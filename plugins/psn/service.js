@@ -1,6 +1,6 @@
 'use strict'
 
-const PSNHelper = require('../../util/psn');
+const PSNHelper = require('pxs-psn-api');
 const psn = new PSNHelper;
 
 class PSNService {

@@ -33,9 +33,9 @@ async function connectToDatabases(fastify) {
 
 fastify
     .register(require('fastify-multipart'))
-    .register(require('./util/schedule'))
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
+    .register(require('./plugins/schedule'))
     .register(require('./plugins/psn'), { prefix: '/api/psn' })
 
 const start = async () => {
