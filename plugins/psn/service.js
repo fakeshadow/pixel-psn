@@ -25,53 +25,61 @@ class PSNService {
     }
 
     async getPSNProfileRemote(query) {
-        const { npid, onlineId } = query;
+        const { onlineId } = query;
         await this.hasToken();
         return psn.getProfile(onlineId, accessToken.get);
     }
 
     async getTrophySummaryRemote(query) {
-        const { onlineId, npId } = query;
-        await this.hasToken();
-        const summary = [];
-        let offset = 0;
-        let total = 0;
+        try {
+            const { onlineId } = query;
+            await this.hasToken();
+            const summary = [];
+            let offset = 0;
+            let total = 0;
+            do {
+                const { totalResults, trophyTitles } = await psn.getSummary(offset, onlineId, accessToken.get);
+                trophyTitles.forEach(list => summary.push({
+                    npCommunicationId: list.npCommunicationId,
+                    progress: list.comparedUser.progress,
+                    earnedTrophies: list.comparedUser.earnedTrophies,
+                    lastUpdateDate: list.comparedUser.lastUpdateDate,
+                }))
+                total = totalResults;
+                offset += 100;
+            } while (offset <= total && total > 100)
 
-        do {
-            const { totalResults, trophyTitles } = await psn.getSummary(offset, onlineId, accessToken.get);
-            trophyTitles.forEach(list => summary.push({
-                npCommunicationId: list.npCommunicationId,
-                progress: list.comparedUser.progress,
-                earnedTrophies: list.comparedUser.earnedTrophies,
-                lastUpdateDate: list.comparedUser.lastUpdateDate,
-            }))
-            total = totalResults;
-            offset += 100;
-        } while (offset <= total && total > 100)
-
-        await this.psnCollection.findOneAndUpdate({ npId, tropyList: { $exists: 1 } }, { $set: { onlineId, trophyList: summary } }, { upsert: true })
+            if (summary.length !== total) throw new Error('summary length does not match total results')
+            const { npId } = await psn.getProfile(onlineId, accessToken.get);
+            await this.psnCollection.findOneAndUpdate({ npId, trophySummary: { $exists: 1 } }, { $set: { onlineId, trophyList: summary } }, { upsert: false })
+        }
+        catch (e) {
+            throw e
+        }
     }
 
     async getUserTrophiesLocal(query) {
         const { npCommunicationId, onlineId } = query;
-        const { npId } = await this.psnCollection.findOne({ onlineId, tropyList: { $exists: 0 } }, { projection: { _id: 0 } });
+        const { npId } = await this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
         return this.psnCollection.findOne({ npId, npCommunicationId }, { projection: { _id: 0 } });
     }
 
     async getUserTrophiesRemote(query) {
+        await this.hasToken();
         const { npCommunicationId, onlineId } = query;
-        const result = await psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
-        return result;
+        return psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
     }
 
     async updateUserTrophiesLocal({ npCommunicationId, trophiesNew }) {
         const { trophies } = trophiesNew
         const { comparedUser } = trophies[0];
         const { npId } = await psn.getProfile(comparedUser.onlineId, accessToken.get);
-        return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies } }, { upsert: true })
+        const lastUpdateDate = new Date()
+        return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies, lastUpdateDate } }, { upsert: true })
     }
 
     async sendMessageRemote(req) {
+        await this.hasToken();
         try {
             if (req.body) {
                 const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
@@ -86,6 +94,7 @@ class PSNService {
     }
 
     async getMessageRemote(query) {
+        await this.hasToken();
         const { onlineId } = query;
         const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
         if (!threadId) throw new Error('failed to generate new thread')
@@ -94,41 +103,18 @@ class PSNService {
 
     async getTrophySummaryLocal(query) {
         const { onlineId } = query;
-        // failsafe for onlineId conflict
-        const users = await this.psnCollection.find({ onlineId, trophyList: { $exists: 0 } }, { sort: { lastUpdateDate: -1 } }).toArray();
-        const { npId } = users[0]
-        const profile = await this.psnCollection.aggregate([
-            { $match: { npId } },
-            {
-                $group: {
-                    _id: null,
-                    npId: { $max: '$npId' },
-                    onlineId: { $max: '$onlineId' },
-                    region: { $max: '$region' },
-                    avatarUrl: { $max: '$avatarUrl' },
-                    aboutMe: { $max: '$aboutMe' },
-                    languagesUsed: { $max: '$languagesUsed' },
-                    plus: { $max: '$plus' },
-                    trophySummary: { $max: '$trophySummary' },
-                    games: { $max: '$trophyList' }
-                }
-            },
-            { $project: { _id: 0 } }
-        ]).toArray()
-
-        return profile[0]
+        return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } });
     }
 
     async updateProfileLocal(profile) {
         const { npId } = profile;
         if (!npId) throw new Error('profileData validation failed')
         const profileField = setProfileField(profile);
-        const { value } = await this.psnCollection.findOneAndUpdate({ npId: npId }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
-
-        return value
+        this.psnCollection.findOneAndUpdate({ npId, trophySummary: { $exists: 1 } }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
     }
 
     async getStoreItemRemote(query) {
+        await this.hasToken();
         const { gameName } = query;
         const { included } = await psn.searchGame(gameName);
 

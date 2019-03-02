@@ -1,7 +1,15 @@
 'use strict'
 
+
+
 const psnPreHandler = async (req, res) => {
     try {
+
+        schedule.scheduleJob('*/5 * * * * *', async function () {
+            console.log('refresh token success')
+            return this.psnService.refreshAccessToken();
+        });
+
         // use this when behind nginx
         // const ip = req.header('X-Real-IP') || req.connection.remoteAddress;  
 
@@ -20,14 +28,18 @@ const psnPreHandler = async (req, res) => {
     }
 }
 
-const preSerialization = async (req, res) => {
+// scheduled worker here
+async function psnPreSerialHandler(req, res, payload) {
     try {
-
+        const { type, profile } = payload;
+        if (type && type === 'profile') await this.cacheService.addWork(profile.onlineId);
+        return profile;
     } catch (e) {
         res.send(e)
     }
 }
 
 module.exports = {
-    psnPreHandler
+    psnPreHandler,
+    psnPreSerialHandler
 }

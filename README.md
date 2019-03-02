@@ -1,3 +1,8 @@
+
+### use as a library:
+take the util folder and import it as a class.(.env is still needed)
+
+
 ### Requirement(tested):
 nodejs 10.14.2
 
@@ -112,5 +117,4 @@ Process may halt when auto refreshing token.
 > blockchain implement.
 
 > fork form-data to add custom content-length
-
 

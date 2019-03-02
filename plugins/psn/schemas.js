@@ -173,7 +173,7 @@ const profileObject = {
     type: 'object',
     require: [],
     properties: {
-        games: {
+        trophyList: {
             type: 'array',
             items: gameObject
         },
@@ -382,14 +382,14 @@ const getMessage = {
                         }
                     }
                 },
-                "threadId": { type: 'string' },
-                "threadType": { type: 'number' },
-                "threadModifiedDate": { type: 'string' },
-                "resultsCount": { type: 'number' },
-                "maxEventIndexCursor": { type: 'string' },
-                "sinceEventIndexCursor": { type: 'string' },
-                "latestEventIndex": { type: 'string' },
-                "endOfThreadEvent": { type: 'boolean' },
+                threadId: { type: 'string' },
+                threadType: { type: 'number' },
+                threadModifiedDate: { type: 'string' },
+                resultsCount: { type: 'number' },
+                maxEventIndexCursor: { type: 'string' },
+                sinceEventIndexCursor: { type: 'string' },
+                latestEventIndex: { type: 'string' },
+                endOfThreadEvent: { type: 'boolean' },
             }
         }
     }
