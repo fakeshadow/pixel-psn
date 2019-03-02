@@ -1,29 +1,22 @@
 'use strict'
+const PSNHelper = require('../../util/psn');
+const psn = new PSNHelper;
 
 class CacheService {
-    constructor(redis) {
-        this.redis = redis
+    constructor(psnCollection) {
+        this.psnCollection = psnCollection
     }
 
-    async getWork(type) {
-        return this.redis.zrange(`worker:${type}`, 0, 1)
+    async addWork(onlineId) {
+        return this.psnCollection.findOneAndUpdate({ type: 'worker', onlineId }, { $set: { type: 'worker', onlineId } }, { upsert: true })
     }
 
-    async addWork(type, work) {
-        const isExisted = await this.redis.zscore(`worker:${type}`, work);
-        if (!isExisted) return this.redis.zadd(`worker:${type}`, 0, work);
-        return null;
+    async deleteWork(onlineId) {
+        return this.psnCollection.findOneAndDelete({ type: 'worker', onlineId })
     }
 
-    async deleteWork(type, work) {
-        return this.redis.zrem(`worker:${type}`, work);
-    }
-
-    async blacklist(query) {
-        const { ip, psnid } = query;
-        if (ip !== undefined) {
-            return this.redis.zscore('blacklist:ip', ip);
-        }
+    async getWork() {
+        return this.psnCollection.findOne({ type: 'worker', onlineId: { $exists: 1 } })
     }
 }
 

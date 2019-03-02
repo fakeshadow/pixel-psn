@@ -12,15 +12,20 @@ module.exports = async (fastify, opts) => {
 
     fastify
         .get('/', testHandler)
-        .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
-        .get('/store/:gameName', { schema: getGameSchema }, searchStoreHandler)
         .get('/message/:onlineId', { schema: getMessageSchema }, getMessageHandler)
         .post('/message', sendMessageHandler)
-        .post('/trophy', { schema: getTrophySchema }, userTrophyHandler)
+        .post('/trophy', { schema: getTrophySchema }, userTrophyHandler);
 
     fastify.register(async function (fastify) {
         fastify
-            .addHook('preHandler', fastify.authPreHandler)
+            .addHook('preSerialization', fastify.psnPreSerialHandler)
+            .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
+            .get('/store/:gameName', { schema: getGameSchema }, searchStoreHandler)
+    })
+
+    fastify.register(async function (fastify) {
+        fastify
+            .addHook('preHandler', fastify.psnPreHandler)
             .post('/admin', { schema: adminSchema }, adminHandler)
     })
 
@@ -38,28 +43,25 @@ module.exports[Symbol.for('plugin-meta')] = {
 }
 
 async function testHandler(req, reply) {
-    
     return this.psnService.sendMessageRemote(req);
 }
 
 async function sendMessageHandler(req, reply) {
-    await this.psnService.refreshAccessToken();
     return this.psnService.sendMessageRemote(req);
 }
 
 async function getMessageHandler(req, reply) {
     const onlineId = req.params.onlineId;
-    await this.psnService.refreshAccessToken();
-
     return this.psnService.getMessageRemote({ onlineId });
 }
 
 async function userTrophyHandler(req, reply) {
     const { npCommunicationId, onlineId } = req.body;
-    // await this.psnService.refreshAccessToken();
-    const cached = await this.psnService.getUserTrophiesLocal({ npCommunicationId, onlineId });
 
-    if (cached) return cached;
+    const trophiesCached = await this.psnService.getUserTrophiesLocal({ npCommunicationId, onlineId });
+
+    const date = new Date();
+    if (trophiesCached && date - trophiesCached.lastUpdateDate < process.env.TIMEGATE) return trophiesCached;
 
     const trophiesNew = await this.psnService.getUserTrophiesRemote({ npCommunicationId, onlineId });
     await this.psnService.updateUserTrophiesLocal({ npCommunicationId, trophiesNew });
@@ -81,15 +83,15 @@ async function searchStoreHandler(req, reply) {
 
 async function getProfileHandler(req, reply) {
     const onlineId = req.params.onlineId
-    const profileLocal = await this.psnService.getTrophySummaryLocal({ onlineId })
+    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
 
-    if (profileLocal) return profileLocal
+    const date = new Date();
+    if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
 
     const profile = await this.psnService.getPSNProfileRemote({ onlineId });
     await this.psnService.updateProfileLocal(profile);
-    await this.psnService.getTrophySummaryRemote(profile);
 
-    return profile;
+    return { type: 'profile', profile };
 }
 
 async function adminHandler(req, reply) {

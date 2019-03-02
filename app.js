@@ -1,39 +1,39 @@
 'use strict'
 
-const path = require('path');
 const fastify = require('fastify')();
 const fp = require('fastify-plugin');
 
-const { psnPreHandler } = require('./hooks/psn');
+const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
 const PSNService = require('./plugins/psn/service');
 const CacheService = require('./plugins/cache/service')
 
 require('dotenv').config();
 
-fastify.use(require('morgan')('tiny'));
+fastify.use(require('morgan')('tiny'))
 
 const decorateFastifyInstance = async fastify => {
     const db = fastify.mongo.db
 
     const psnCollection = await db.createCollection('psn');
     const psnService = new PSNService(psnCollection);
-    const cacheService = new CacheService(fastify.redis);
+    const cacheService = new CacheService(psnCollection);
 
     fastify
         .decorate('psnService', psnService)
         .decorate('cacheService', cacheService)
-        .decorate('authPreHandler', psnPreHandler);
+        .decorate('psnPreHandler', psnPreHandler)
+        .decorate('psnPreSerialHandler', psnPreSerialHandler)
 }
 
-const connectToDatabases = async fastify => {
+async function connectToDatabases(fastify) {
     fastify
         .register(require('fastify-mongodb'), { url: process.env.MONGO, useNewUrlParser: true })
-        .register(require('fastify-redis'), { host: process.env.REDIS_IP, port: process.env.REDIS_PORT, family: 4, password: process.env.REDIS_PASS })
+    //.register(require('fastify-redis'), { host: process.env.REDIS_IP, port: process.env.REDIS_PORT, family: 4, password: process.env.REDIS_PASS })
 }
 
 fastify
     .register(require('fastify-multipart'))
-    .register(require('fastify-static'), { root: path.join(__dirname, 'public'), prefix: '/public/', })
+    .register(require('./util/schedule'))
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
     .register(require('./plugins/psn'), { prefix: '/api/psn' })
