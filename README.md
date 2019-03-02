@@ -73,10 +73,19 @@
     [GET]    /api/psn/store/:gameName        (not working for now)
 
 
+#### **How cache works:**
+    Refresh token is stored in database and will update acess token every hour
+
+    User profile with trophy list is stored as single document. (trophy list update is handled by background worker. It starts an update every 30 seconds)
+
+    User individual game trophy list is stored as a single document with user's npId.
+    
+    All data will return a cached result from database if the last update time is less than an hour from present.
+
+
 ### **issue**:
     Refresh token may expire and you have to login again manually.
     Process may halt when auto refreshing token.
-
 
 
 ### todo:

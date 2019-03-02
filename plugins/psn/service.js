@@ -82,7 +82,7 @@ class PSNService {
         await this.hasToken();
         try {
             if (req.body) {
-                const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+                const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
                 if (!threadId) throw new Error('failed to generate new thread')
                 const { message, onlineId } = req.body;
                 return psn.sendMessage(threadId, message, null, accessToken.get);
@@ -96,7 +96,7 @@ class PSNService {
     async getMessageRemote(query) {
         await this.hasToken();
         const { onlineId } = query;
-        const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+        const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
         if (!threadId) throw new Error('failed to generate new thread')
         return psn.getThreadDetail(threadId, 20, accessToken.get);
     }
@@ -114,15 +114,17 @@ class PSNService {
     }
 
     async getStoreItemRemote(query) {
-        await this.hasToken();
         const { gameName } = query;
-        const { included } = await psn.searchGame(gameName);
+        const lang = 'ch'
+        const region = 'HK'
+        const age = 19
+        const { included } = await psn.searchGame(gameName, lang, region, age);
 
         if (!included.length) throw new Error('nothing found')
 
         const ids = included.map(include => ({ gameId: include.id }))
         const rawGames = await Promise.all(ids.map(async id => {
-            const { included } = await psn.showGameDetail(id.gameId)
+            const { included } = await psn.showGameDetail(id.gameId, lang, region, age)
             return included[0]
         }))
         const sortedGames = rawGames.map(item => setStoreItemField(item))
@@ -200,7 +202,7 @@ function multipart(req) {
                 const array = field.split(':')
                 const onlineId = array[0];
                 const message = array[1];
-                const { threadId } = await psn.generateNewMessageThread(onlineId, accessToken.get);
+                const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
                 console.log(file)
                 if (!threadId) throw new Error('failed to generate new thread')
                 await psn.sendMessage(threadId, message, file, accessToken.get);

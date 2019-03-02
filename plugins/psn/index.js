@@ -43,7 +43,7 @@ module.exports[Symbol.for('plugin-meta')] = {
 }
 
 async function testHandler(req, reply) {
-    return this.psnService.sendMessageRemote(req);
+    return this.psnService.getStoreItemRemote(req);
 }
 
 async function sendMessageHandler(req, reply) {
@@ -84,10 +84,10 @@ async function searchStoreHandler(req, reply) {
 async function getProfileHandler(req, reply) {
     const onlineId = req.params.onlineId
     await this.psnService.refreshAccessToken();
-    // const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
+    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
 
-    // const date = new Date();
-    // if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
+    const date = new Date();
+    if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
 
     const profile = await this.psnService.getPSNProfileRemote({ onlineId });
     await this.psnService.updateProfileLocal(profile);
