@@ -21,7 +21,7 @@ module.exports = async (fastify, opts) => {
             .addHook('preSerialization', fastify.psnPreSerialHandler)
             .get('/discount', discountHandler)
             .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
-            .get('/store/:gameName', { schema: getGameSchema }, searchStoreHandler)
+            .get('/store/:gameName/:language/:region/:ageLimit', { schema: getGameSchema }, searchStoreHandler)
     })
 
     fastify.register(async function (fastify) {
@@ -79,12 +79,15 @@ async function userTrophyHandler(req, reply) {
 
 async function searchStoreHandler(req, reply) {
     const gameName = req.params.gameName;
+    const language = req.params.language;
+    const region = req.params.region;
+    const ageLimit = req.params.ageLimit;
 
     const itemsCache = await this.psnService.getStoreItemLocal({ gameName })
 
     if (itemsCache.length) return itemsCache;
 
-    const itemsNew = await this.psnService.getStoreItemRemote({ gameName });
+    const itemsNew = await this.psnService.getStoreItemRemote({ gameName, language, region, ageLimit });
     await this.psnService.updateStoreItemLocal(itemsNew);
 
     return itemsNew;

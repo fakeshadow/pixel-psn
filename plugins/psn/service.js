@@ -114,17 +114,14 @@ class PSNService {
     }
 
     async getStoreItemRemote(query) {
-        const { gameName } = query;
-        const lang = 'ch'
-        const region = 'HK'
-        const age = 19
-        const { included } = await psn.searchGame(gameName, lang, region, age);
+        const { gameName, language, region, ageLimit } = query;
+        const { included } = await psn.searchGame(gameName, language, region, ageLimit);
 
         if (!included.length) throw new Error('nothing found')
 
         const ids = included.map(include => ({ gameId: include.id }))
         const rawGames = await Promise.all(ids.map(async id => {
-            const { included } = await psn.showGameDetail(id.gameId, lang, region, age)
+            const { included } = await psn.showGameDetail(id.gameId, language, region, ageLimit)
             return included[0]
         }))
         const sortedGames = rawGames.map(item => setStoreItemField(item))
@@ -150,7 +147,7 @@ class PSNService {
     }
 
     async compareStoreItemsPrices(lang, region, age) {
-        const itemsOld = await this.psnCollection.find({ gameContentType: { $exists: 1 } }, { projection: { id: 1, prices: 1 } }).toArray();
+        const itemsOld = await this.psnCollection.find({ gameContentType: { $exists: 1 } }, { projection: { id: 1, prices: 1, dealEndDate: 1 } }).toArray();
         const changes = [];
         await Promise.all([itemsOld.forEach(async itemOld => {
             const { included } = await psn.showGameDetail(itemOld.id, lang, region, age);
@@ -166,8 +163,8 @@ class PSNService {
     }
 
     async getDiscounts() {
-        const date = new Date();
-        return this.psnCollection.find({ dealEndDate: { $gt: date } }).toArray()
+        const date = new Date().toISOString()
+        return this.psnCollection.find({ dealEndDate: { $gt: date } }, { projection: { _id: 0 } }).toArray()      
     }
 
     async hasToken() {

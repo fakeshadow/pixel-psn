@@ -259,11 +259,20 @@ const getProfile = {
 const getGame = {
     params: {
         type: 'object',
-        required: ['gameName'],
+        required: ['gameName', 'language', 'region', 'ageLimit'],
         properties: {
             gameName: {
                 type: 'string',
                 // pattern: '^[0-9a-fA-F]{24}'
+            },
+            language: {
+                type: 'string',
+            },
+            region: {
+                type: 'string',
+            },
+            ageLimit: {
+                type: 'string',
             }
         }
     },

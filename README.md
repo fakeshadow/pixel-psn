@@ -72,7 +72,8 @@
 
 
 ### **find games from store**                    
-    [GET]    /api/psn/store/:gameName        
+    [GET]    /api/psn/store/:gameName/:language/:region/:ageLimit
+    for example   /ace combat/en/US/21    will a serach result for ace combat from US PSN store.        
 
 
 ### **get discount info**
