@@ -103,7 +103,7 @@ class PSNService {
 
     async getTrophySummaryLocal(query) {
         const { onlineId } = query;
-        return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } });
+        return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
     }
 
     async updateProfileLocal(profile) {
@@ -147,6 +147,27 @@ class PSNService {
             })
         })
         return this.psnCollection.bulkWrite(updateOnes);
+    }
+
+    async compareStoreItemsPrices(lang, region, age) {
+        const itemsOld = await this.psnCollection.find({ gameContentType: { $exists: 1 } }, { projection: { id: 1, prices: 1 } }).toArray();
+        const changes = [];
+        await Promise.all([itemsOld.forEach(async itemOld => {
+            const { included } = await psn.showGameDetail(itemOld.id, lang, region, age);
+            const itemNew = setStoreItemField(included)
+            const compared = compareAndFormItemChange(itemOld, itemNew);
+            changes.push(compared);
+        })])
+        if (changes.length) {
+            const updateOnes = [];
+            changes.forEach(change => updateOnes.push({ updateOne: { filter: change.id, update: { $set: { 'badge-info': change['badge-info'], dealEndDate: change.dealEndDate }, $push: { history: change.history } }, upsert: false } }))
+        }
+        return this.psnCollection.bulkWrite(updateOnes);
+    }
+
+    async getDiscounts() {
+        const date = new Date();
+        return this.psnCollection.find({ dealEndDate: { $gt: date } }).toArray()
     }
 
     async hasToken() {
@@ -267,6 +288,7 @@ function setStoreItemField(item) {
     return {
         id: item.id,
         type: item.type,
+        dealEndDate: endDate1 >= endDate2 ? endDate1 : endDate2,
         'badge-info': item.attributes['badge-info'],
         fileSize: item.attributes['file-size'],
         gameContentType: item.attributes['game-content-type'],
@@ -301,27 +323,21 @@ function setStoreItemField(item) {
     }
 }
 
-// function updateStoreItemHistory(sortedItem) {
-//     if (noPlus.endDate < endDate1 || storeItem.prices.plus.endDate < endDate2) {
-//         let history;
-//         if (storeItem.prices.noPlus.endDate != null || storeItem.prices.plus.endDate != null) {
-//             history = [...storeItem.history, storeItem.prices];
-//         }
-//         storeItem.prices = {
-//             'noPlus': {
-//                 'originalPrice': originalPrice1,
-//                 'price': price1,
-//                 'discount': discountRate1,
-//                 'startDate': startDate1,
-//                 'endDate': endDate1
-//             },
-//             'plus': {
-//                 'originalPrice': originalPrice2,
-//                 'price': price2,
-//                 'discount': discountRate2,
-//                 'startDate': startDate2,
-//                 'endDate': endDate2
-//             }
-//         };
-//         storeItem.history = history;
-//     }
+
+function compareAndFormItemChange(itemOld, itemNew) {
+    const priceOld = itemOld.prices;
+    const priceNew = itemNew.prices;
+    if (priceOld.noPlus.price > priceNew.noPlus.price || priceOld.plus.price > priceNew.plus.price) {
+        return {
+            id: itemOld.id,
+            dealEndDate: itemOld.dealEndDate >= itemNew.dealEndDate ? itemOld.dealEndDate : itemNew.dealEndDate,
+            'badge-info': itemNew['badge-info'],
+            history: {
+                noPlus: priceOld.noPlus,
+                plus: priceOld.noPlus
+            }
+        }
+    } else {
+        return null
+    }
+}

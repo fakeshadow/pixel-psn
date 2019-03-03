@@ -19,6 +19,7 @@ module.exports = async (fastify, opts) => {
     fastify.register(async function (fastify) {
         fastify
             .addHook('preSerialization', fastify.psnPreSerialHandler)
+            .get('/discount', discountHandler)
             .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
             .get('/store/:gameName', { schema: getGameSchema }, searchStoreHandler)
     })
@@ -42,16 +43,23 @@ module.exports[Symbol.for('plugin-meta')] = {
     }
 }
 
+
+
 async function testHandler(req, reply) {
-    return this.psnService.getStoreItemRemote(req);
+}
+
+async function discountHandler(requ, reply) {
+    return this.psnService.getDiscounts();
 }
 
 async function sendMessageHandler(req, reply) {
+
     return this.psnService.sendMessageRemote(req);
 }
 
 async function getMessageHandler(req, reply) {
     const onlineId = req.params.onlineId;
+
     return this.psnService.getMessageRemote({ onlineId });
 }
 
@@ -71,6 +79,7 @@ async function userTrophyHandler(req, reply) {
 
 async function searchStoreHandler(req, reply) {
     const gameName = req.params.gameName;
+
     const itemsCache = await this.psnService.getStoreItemLocal({ gameName })
 
     if (itemsCache.length) return itemsCache;
@@ -83,7 +92,7 @@ async function searchStoreHandler(req, reply) {
 
 async function getProfileHandler(req, reply) {
     const onlineId = req.params.onlineId
-    await this.psnService.refreshAccessToken();
+
     const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
 
     const date = new Date();

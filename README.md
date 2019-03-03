@@ -6,20 +6,20 @@
     npm 6.4.1
 
 
-## Setup:
+### Setup:
     clone this repo
     npm install
     Rename .env_sample to .env and change whatever params you want
     npm start
 
 
-## database Setup:
+### database Setup:
     install mongoDB
     create a databse called "psn" and setup a user password for it.
     change the DATABASE setting in .env file according to your previous setting.
 
-## API endpoints:
-*  check https://tusticles.com/psn-php/first_login.html for how to get uuid and 2FA
+### API endpoints:
+*  Check [HERE](https://tusticles.com/psn-php/first_login.html) for how to get uuid and 2FA code you need them to interact with all PSN API except the ones for PSN store
 
 
 ### **login** 
@@ -31,7 +31,7 @@
         'password': your admin password 
 
 
-#### **get profile**                    
+### **get profile**                    
     [GET]     /api/psn/user_psn_id
 
 
@@ -49,28 +49,35 @@
     accept json body for message sending(set your post header 'Content-Type' to 'application/json')
         Required keys and values:  
         text message:
-            'onlineId': 'The threadId you want to post message to'
+            'onlineId': 'The onlineId you want to post message to'
             'message': 'The text content of your message'
         image message:
             form data key:   'onlineId:message'
             form data: png file 
 
-#### **recieve messages**                    
+
+### **recieve messages**                    
     [GET]     /api/psn/message/:onlineID
 
 
-#### **leave a message thread**                    
+### **leave a message thread**                    
     [DELETE]     /api/psn/message
     accept json body (set your post header 'Content-Type' to 'application/json')
         Accept keys and values:  
             'threadId': 'leave this message thread' 
 
 
-#### **get user activities**                    
+### **get user activities**                    
     [GET]   /api/psn/activity/:onlineId        (not working for now)
 
-#### **find games from store**                    
-    [GET]    /api/psn/store/:gameName        (not working for now)
+
+### **find games from store**                    
+    [GET]    /api/psn/store/:gameName        
+
+
+### **get discount info**
+    [GET]   /api/psn/store/discount            (only return a local cached result)
+
 
 
 #### **How cache works:**
