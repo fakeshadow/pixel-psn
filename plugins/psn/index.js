@@ -1,5 +1,9 @@
 'use strict'
 
+const multer = require('fastify-multer')
+
+const cpUpload = multer().fields([{ name: 'image', maxCount: 1 }, { name: 'message', maxCount: 1 }, { name: 'onlineId', maxCount: 1 }])
+
 const {
     adminLogin: adminSchema,
     getProfile: getProfileSchema,
@@ -11,9 +15,11 @@ const {
 module.exports = async (fastify, opts) => {
 
     fastify
-        .get('/', testHandler)
+        .addHook('preHandler', cpUpload)
+        .get('/activity/:onlineId/:type/:page', getActivityHandler)
         .get('/message/:onlineId', { schema: getMessageSchema }, getMessageHandler)
         .post('/message', sendMessageHandler)
+        .delete('/message/:threadId', deleteMessageHandler)
         .post('/trophy', { schema: getTrophySchema }, userTrophyHandler);
 
     fastify.register(async function (fastify) {
@@ -44,8 +50,11 @@ module.exports[Symbol.for('plugin-meta')] = {
 }
 
 
-
-async function testHandler(req, reply) {
+async function getActivityHandler(req, reply) {
+    const onlineId = req.params.onlineId;
+    const type = req.params.type;
+    const page = req.params.page;
+    return this.psnService.getUserActivity(onlineId, type, page)
 }
 
 async function discountHandler(requ, reply) {
@@ -53,14 +62,17 @@ async function discountHandler(requ, reply) {
 }
 
 async function sendMessageHandler(req, reply) {
-
     return this.psnService.sendMessageRemote(req);
 }
 
 async function getMessageHandler(req, reply) {
     const onlineId = req.params.onlineId;
-
     return this.psnService.getMessageRemote({ onlineId });
+}
+
+async function deleteMessageHandler(req, reply) {
+    const threadId = req.params.threadId
+    return this.psnService.deleteMessageThread(threadId);
 }
 
 async function userTrophyHandler(req, reply) {

@@ -2,6 +2,7 @@
 
 const fastify = require('fastify')();
 const fp = require('fastify-plugin');
+const multer = require('fastify-multer')
 
 const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
 const PSNService = require('./plugins/psn/service');
@@ -32,7 +33,7 @@ async function connectToDatabases(fastify) {
 }
 
 fastify
-    .register(require('fastify-multipart'))
+    .register(multer.contentParser)
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
     .register(require('./plugins/schedule'))

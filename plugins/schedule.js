@@ -17,17 +17,18 @@ const failSafe = {
 
 module.exports = fp(function (fastify, opts, next) {
 
-    schedule.scheduleJob('33 2 * * * *', async () => {
+    schedule.scheduleJob('* /50 * * * *', async () => {
         try {
+            const date = new Date()
             console.log('refreshing token')
             await fastify.psnService.refreshAccessToken();
-            console.log('refresh token success')
+            console.log('refresh token success at ' + date)
         } catch (e) {
             console.log(e)
         }
     });
 
-    schedule.scheduleJob('*/30 * * * * *', async () => {
+    schedule.scheduleJob('/30 * * * * *', async () => {
         try {
             if (failSafe.get === false) {
                 const work = await fastify.cacheService.getWork();
@@ -46,10 +47,10 @@ module.exports = fp(function (fastify, opts, next) {
 
     schedule.scheduleJob('3 23 * * * *', async () => {
         try {
-           
-                //fastify.psnService.compareStoreItemsPrices('ch', 'HK', '19')
-                //fastify.psnService.compareStoreItemsPrices('en', 'US', '21')
-            
+
+            //fastify.psnService.compareStoreItemsPrices('ch', 'HK', '19')
+            //fastify.psnService.compareStoreItemsPrices('en', 'US', '21')
+
         } catch (e) {
             console.log(e)
         }

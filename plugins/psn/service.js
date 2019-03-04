@@ -13,7 +13,7 @@ class PSNService {
         const { access_token, refresh_token } = await psn.getAcceeToken(uuid, tfa);
         if (!access_token) throw new Error('login failed')
         accessToken.set = access_token;
-        await this.psnCollection.findOneAndUpdate({ refresh_token }, { $set: { refresh_token, access_token } }, { upsert: true });
+        await this.psnCollection.findOneAndUpdate({ refresh_token: { $exists: 1 } }, { $set: { refresh_token, access_token } }, { upsert: true });
         return { message: 'success' };
     }
 
@@ -80,17 +80,14 @@ class PSNService {
 
     async sendMessageRemote(req) {
         await this.hasToken();
-        try {
-            if (req.body) {
-                const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
-                if (!threadId) throw new Error('failed to generate new thread')
-                const { message, onlineId } = req.body;
-                return psn.sendMessage(threadId, message, null, accessToken.get);
-            }
-            return multipart(req);
-        } catch (e) {
-            throw e
-        }
+
+        const { message, onlineId } = req.body;
+        const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
+        if (!threadId) throw new Error('failed to generate new thread')
+
+        if (req.files['image']) return psn.sendMessage(threadId, message, req.files['image'][0].buffer, accessToken.get);
+
+        return psn.sendMessage(threadId, message, null, accessToken.get);
     }
 
     async getMessageRemote(query) {
@@ -101,6 +98,10 @@ class PSNService {
         return psn.getThreadDetail(threadId, 20, accessToken.get);
     }
 
+    async deleteMessageThread(threadId) {
+        await this.hasToken();
+        return psn.leaveMessageThread(threadId, accessToken.get)
+    }
     async getTrophySummaryLocal(query) {
         const { onlineId } = query;
         return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
@@ -111,6 +112,12 @@ class PSNService {
         if (!npId) throw new Error('profileData validation failed')
         const profileField = setProfileField(profile);
         this.psnCollection.findOneAndUpdate({ npId, trophySummary: { $exists: 1 } }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
+    }
+
+    async getUserActivity(onlineId, type, page) {
+        await this.hasToken();
+        // await this.refreshAccessToken();
+        return psn.getUserActivities(onlineId, type, page, accessToken.get)
     }
 
     async getStoreItemRemote(query) {
@@ -164,7 +171,7 @@ class PSNService {
 
     async getDiscounts() {
         const date = new Date().toISOString()
-        return this.psnCollection.find({ dealEndDate: { $gt: date } }, { projection: { _id: 0 } }).toArray()      
+        return this.psnCollection.find({ dealEndDate: { $gt: date } }, { projection: { _id: 0 } }).toArray()
     }
 
     async hasToken() {
@@ -189,53 +196,6 @@ const accessToken = {
     set set(token) {
         this.accessToken = token;
     }
-}
-
-
-function multipart(req) {
-    return new Promise((resolve, reject) => {
-        const options = {
-            limits: {
-                fieldNameSize: 100,
-                fieldSize: 1000000,
-                fields: 10,
-                fileSize: 1000000,
-                files: 5,
-                headerPairs: 2000
-            }
-        };
-        const mp = req.multipart(handler, done, options);
-        mp.on('partsLimit', () => reject({
-            'error': 'Maximum number of form parts reached'
-        }));
-        mp.on('filesLimit', () => reject({
-            'error': 'Maximum number of files reached'
-        }));
-        mp.on('fieldsLimit', () => reject({
-            'error': 'Maximim number of fields reached'
-        }));
-
-        async function handler(field, file, filename, encoding, mimetype) {
-            try {
-                const array = field.split(':')
-                const onlineId = array[0];
-                const message = array[1];
-                const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
-                console.log(file)
-                if (!threadId) throw new Error('failed to generate new thread')
-                await psn.sendMessage(threadId, message, file, accessToken.get);
-            } catch (e) {
-                throw e
-            }
-        }
-
-        function done(err) {
-            if (err) {
-                return reject(err)
-            };
-            resolve();
-        }
-    })
 }
 
 function setProfileField(profile) {

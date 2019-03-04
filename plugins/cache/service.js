@@ -1,6 +1,4 @@
 'use strict'
-const PSNHelper = require('../../util/psn');
-const psn = new PSNHelper;
 
 class CacheService {
     constructor(psnCollection) {
