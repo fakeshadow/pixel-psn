@@ -29,10 +29,10 @@ const decorateFastifyInstance = async fastify => {
 async function connectToDatabases(fastify) {
     fastify
         .register(require('fastify-mongodb'), { url: process.env.MONGO, useNewUrlParser: true })
-    //.register(require('fastify-redis'), { host: process.env.REDIS_IP, port: process.env.REDIS_PORT, family: 4, password: process.env.REDIS_PASS })
 }
 
 fastify
+    .register(require('fastify-cors'), { origin: true, methods: ['GET', 'POST'] })
     .register(multer.contentParser)
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))

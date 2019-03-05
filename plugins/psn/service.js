@@ -67,13 +67,13 @@ class PSNService {
     async getUserTrophiesRemote(query) {
         await this.hasToken();
         const { npCommunicationId, onlineId } = query;
-        return psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
+        const { trophies } = await psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
+        const sortedTrophies = setIndividualGameListField(trophies)
+        return sortedTrophies
     }
 
-    async updateUserTrophiesLocal({ npCommunicationId, trophiesNew }) {
-        const { trophies } = trophiesNew
-        const { comparedUser } = trophies[0];
-        const { npId } = await psn.getProfile(comparedUser.onlineId, accessToken.get);
+    async updateUserTrophiesLocal(query) {
+        const { npId, npCommunicationId, trophies } = query
         const lastUpdateDate = new Date()
         return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies, lastUpdateDate } }, { upsert: true })
     }
@@ -116,7 +116,7 @@ class PSNService {
 
     async getUserActivity(onlineId, type, page) {
         await this.hasToken();
-        // await this.refreshAccessToken();
+
         return psn.getUserActivities(onlineId, type, page, accessToken.get)
     }
 
@@ -211,6 +211,13 @@ function setProfileField(profile) {
         trophySummary: profile.trophySummary,
         lastUpdateDate: date
     }
+}
+
+function setIndividualGameListField(trophies) {
+    return trophies.map(trophy => ({
+        earnedDate: trophy.comparedUser.earned === true ? trophy.comparedUser.earnedDate : null,
+        trophyId: trophy.trophyId,
+    }))
 }
 
 function setStoreItemField(item) {

@@ -83,10 +83,14 @@ async function userTrophyHandler(req, reply) {
     const date = new Date();
     if (trophiesCached && date - trophiesCached.lastUpdateDate < process.env.TIMEGATE) return trophiesCached;
 
-    const trophiesNew = await this.psnService.getUserTrophiesRemote({ npCommunicationId, onlineId });
-    await this.psnService.updateUserTrophiesLocal({ npCommunicationId, trophiesNew });
+    let trophies, npId;
+    await Promise.all([
+        trophies = await this.psnService.getUserTrophiesRemote({ npCommunicationId, onlineId }),
+        { npId } = await this.psnService.getPSNProfileRemote({ onlineId })
+    ])
 
-    return trophiesNew;
+    if (trophies && npId) await this.psnService.updateUserTrophiesLocal({ npId, npCommunicationId, trophies });
+    return trophies;
 }
 
 async function searchStoreHandler(req, reply) {
