@@ -4,7 +4,7 @@
     npm 6.4.1
 
 
-### **Setup:**
+### **Backend Setup:**
     clone this repo
 
     npm install
@@ -20,6 +20,18 @@
     create a databse called "psn" and setup a user password for it.
 
     change the DATABASE setting in .env file according to your previous setting.
+
+
+## **Frontend Setup:**
+    Rename .env_sample to .env and change to match your backend.
+
+    yarn build for production
+
+    setup your http server
+
+    * You can also use yarn serve and run it in debug mode
+
+
 
 ### **API endpoints:**
 *  Check [HERE](https://tusticles.com/psn-php/first_login.html) for how to get uuid and 2FA code you need them to interact with all PSN API except the ones for PSN store
