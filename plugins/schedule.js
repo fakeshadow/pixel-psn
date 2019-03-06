@@ -1,6 +1,6 @@
-const fp = require('fastify-plugin')
+const fp = require('fastify-plugin');
 
-const schedule = require('node-schedule')
+const schedule = require('node-schedule');
 
 const failSafe = {
     isfailed: false,
@@ -8,19 +8,19 @@ const failSafe = {
         return this.isfailed
     },
     set set(failed) {
-        this.isfailed = !this.isfailed
+        this.isfailed = !this.isfailed;
         return setTimeout(() => {
             this.isfailed = !this.isfailed
         }, 10000)
     }
-}
+};
 
 module.exports = fp(function (fastify, opts, next) {
 
     schedule.scheduleJob('* /50 * * * *', async () => {
         try {
-            const date = new Date()
-            console.log('refreshing token')
+            const date = new Date();
+            console.log('refreshing token');
             await fastify.psnService.refreshAccessToken();
             console.log('refresh token success at ' + date)
         } catch (e) {
@@ -33,14 +33,14 @@ module.exports = fp(function (fastify, opts, next) {
             if (failSafe.get === false) {
                 const work = await fastify.cacheService.getWork();
                 if (!work) return null;
-                const { onlineId } = work
+                const { onlineId } = work;
 
-                await fastify.psnService.getTrophySummaryRemote({ onlineId })
+                await fastify.psnService.getTrophySummaryRemote({ onlineId });
                 await fastify.cacheService.deleteWork(onlineId);
                 console.log('succeefully update user: ' + onlineId)
             }
         } catch (e) {
-            failSafe.set = failed
+            failSafe.set = failed;
             console.log(e)
         }
     });
@@ -60,4 +60,4 @@ module.exports = fp(function (fastify, opts, next) {
 }, {
         fastify: '>=1.0.0',
         name: 'fastify-schedule'
-    })
+    });

@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const PSNHelper = require('pxs-psn-api');
 const psn = new PSNHelper;
@@ -9,81 +9,100 @@ class PSNService {
     }
 
     async login(req) {
-        const { uuid, tfa } = req;
-        const { access_token, refresh_token } = await psn.getAcceeToken(uuid, tfa);
-        if (!access_token) throw new Error('login failed')
+        const {uuid, tfa} = req;
+        const {access_token, refresh_token} = await psn.getAcceeToken(uuid, tfa);
+        if (!access_token) throw new Error('login failed');
         accessToken.set = access_token;
-        await this.psnCollection.findOneAndUpdate({ refresh_token: { $exists: 1 } }, { $set: { refresh_token, access_token } }, { upsert: true });
-        return { message: 'success' };
+        await this.psnCollection.findOneAndUpdate({refresh_token: {$exists: 1}}, {
+            $set: {
+                refresh_token,
+                access_token
+            }
+        }, {upsert: true});
+        return {message: 'success'};
     }
 
     async refreshAccessToken() {
-        const { refresh_token } = await this.psnCollection.findOne({ refresh_token: { $exists: 1 } });
-        const { access_token } = await psn.refreshAccessToken(refresh_token);
+        const {refresh_token} = await this.psnCollection.findOne({refresh_token: {$exists: 1}});
+        const {access_token} = await psn.refreshAccessToken(refresh_token);
         accessToken.set = access_token;
-        await this.psnCollection.findOneAndUpdate({ refresh_token }, { $set: { access_token } }, { upsert: false });
+        await this.psnCollection.findOneAndUpdate({refresh_token}, {$set: {access_token}}, {upsert: false});
     }
 
     async getPSNProfileRemote(query) {
-        const { onlineId } = query;
+        const {onlineId} = query;
         await this.hasToken();
         return psn.getProfile(onlineId, accessToken.get);
     }
 
     async getTrophySummaryRemote(query) {
         try {
-            const { onlineId } = query;
+            const {onlineId} = query;
             await this.hasToken();
             const summary = [];
             let offset = 0;
             let total = 0;
             do {
-                const { totalResults, trophyTitles } = await psn.getSummary(offset, onlineId, accessToken.get);
+                const {totalResults, trophyTitles} = await psn.getSummary(offset, onlineId, accessToken.get);
                 trophyTitles.forEach(list => summary.push({
                     npCommunicationId: list.npCommunicationId,
                     progress: list.comparedUser.progress,
                     earnedTrophies: list.comparedUser.earnedTrophies,
                     lastUpdateDate: list.comparedUser.lastUpdateDate,
-                }))
+                }));
                 total = totalResults;
                 offset += 100;
-            } while (offset <= total && total > 100)
+            } while (offset <= total && total > 100);
 
-            if (summary.length !== total) throw new Error('summary length does not match total results')
-            const { npId } = await psn.getProfile(onlineId, accessToken.get);
-            await this.psnCollection.findOneAndUpdate({ npId, trophySummary: { $exists: 1 } }, { $set: { onlineId, trophyList: summary } }, { upsert: false })
-        }
-        catch (e) {
+            if (summary.length !== total) throw new Error('summary length does not match total results');
+            const {npId} = await psn.getProfile(onlineId, accessToken.get);
+            await this.psnCollection.findOneAndUpdate({npId, trophySummary: {$exists: 1}}, {
+                $set: {
+                    onlineId,
+                    trophyList: summary
+                }
+            }, {upsert: false})
+        } catch (e) {
             throw e
         }
     }
 
     async getUserTrophiesLocal(query) {
-        const { npCommunicationId, onlineId } = query;
-        const { npId } = await this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
-        return this.psnCollection.findOne({ npId, npCommunicationId }, { projection: { _id: 0 } });
+        const {npCommunicationId, onlineId} = query;
+        const {npId} = await this.psnCollection.findOne({
+            onlineId,
+            trophySummary: {$exists: 1}
+        }, {projection: {_id: 0}});
+        return this.psnCollection.findOne({npId, npCommunicationId}, {projection: {_id: 0}});
     }
 
     async getUserTrophiesRemote(query) {
         await this.hasToken();
-        const { npCommunicationId, onlineId } = query;
-        const { trophies } = await psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
-        const sortedTrophies = setIndividualGameListField(trophies)
+        const {npCommunicationId, onlineId} = query;
+        const {trophies} = await psn.getIndividualGame(npCommunicationId, onlineId, accessToken.get);
+        const sortedTrophies = setIndividualGameListField(trophies);
         return sortedTrophies
     }
 
     async updateUserTrophiesLocal(query) {
-        const { npId, npCommunicationId, trophies } = query
-        const lastUpdateDate = new Date()
-        return this.psnCollection.findOneAndUpdate({ npId, npCommunicationId }, { $set: { npId, npCommunicationId, trophies, lastUpdateDate } }, { upsert: true })
+        const {npId, npCommunicationId, trophies} = query;
+        const lastUpdateDate = new Date();
+        return this.psnCollection.findOneAndUpdate({npId, npCommunicationId}, {
+            $set: {
+                npId,
+                npCommunicationId,
+                trophies,
+                lastUpdateDate
+            }
+        }, {upsert: true})
     }
 
     async sendMessageRemote(req) {
         await this.hasToken();
 
-        const { message, onlineId } = req.body;
-        const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
-        if (!threadId) throw new Error('failed to generate new thread')
+        const {message, onlineId} = req.body;
+        const {threadId} = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
+        if (!threadId) throw new Error('failed to generate new thread');
 
         if (req.files['image']) return psn.sendMessage(threadId, message, req.files['image'][0].buffer, accessToken.get);
 
@@ -92,9 +111,9 @@ class PSNService {
 
     async getMessageRemote(query) {
         await this.hasToken();
-        const { onlineId } = query;
-        const { threadId } = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
-        if (!threadId) throw new Error('failed to generate new thread')
+        const {onlineId} = query;
+        const {threadId} = await psn.generateNewMessageThread(onlineId, process.env.MYID, accessToken.get);
+        if (!threadId) throw new Error('failed to generate new thread');
         return psn.getThreadDetail(threadId, 20, accessToken.get);
     }
 
@@ -102,16 +121,20 @@ class PSNService {
         await this.hasToken();
         return psn.leaveMessageThread(threadId, accessToken.get)
     }
+
     async getTrophySummaryLocal(query) {
-        const { onlineId } = query;
-        return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
+        const {onlineId} = query;
+        return this.psnCollection.findOne({onlineId, trophySummary: {$exists: 1}}, {projection: {_id: 0}});
     }
 
     async updateProfileLocal(profile) {
-        const { npId } = profile;
-        if (!npId) throw new Error('profileData validation failed')
+        const {npId} = profile;
+        if (!npId) throw new Error('profileData validation failed');
         const profileField = setProfileField(profile);
-        this.psnCollection.findOneAndUpdate({ npId, trophySummary: { $exists: 1 } }, { $set: profileField }, { projection: { _id: 0 }, upsert: true })
+        this.psnCollection.findOneAndUpdate({
+            npId,
+            trophySummary: {$exists: 1}
+        }, {$set: profileField}, {projection: {_id: 0}, upsert: true})
     }
 
     async getUserActivity(onlineId, type, page) {
@@ -121,57 +144,72 @@ class PSNService {
     }
 
     async getStoreItemRemote(query) {
-        const { gameName, language, region, ageLimit } = query;
-        const { included } = await psn.searchGame(gameName, language, region, ageLimit);
+        const {gameName, language, region, ageLimit} = query;
+        const {included} = await psn.searchGame(gameName, language, region, ageLimit);
 
-        if (!included.length) throw new Error('nothing found')
+        if (!included.length) throw new Error('nothing found');
 
-        const ids = included.map(include => ({ gameId: include.id }))
+        const ids = included.map(include => ({gameId: include.id}));
         const rawGames = await Promise.all(ids.map(async id => {
-            const { included } = await psn.showGameDetail(id.gameId, language, region, ageLimit)
+            const {included} = await psn.showGameDetail(id.gameId, language, region, ageLimit);
             return included[0]
-        }))
-        const sortedGames = rawGames.map(item => setStoreItemField(item))
+        }));
+        const sortedGames = rawGames.map(item => setStoreItemField(item));
 
         return sortedGames
     }
 
     async getStoreItemLocal(query) {
-        const { gameName } = query;
+        const {gameName} = query;
         // need to improve regex params.
-        return this.psnCollection.find({ name: { '$regex': gameName, '$options': '$i' } }, { projection: { _id: 0 } }).toArray()
+        return this.psnCollection.find({name: {'$regex': gameName, '$options': '$i'}}, {projection: {_id: 0}}).toArray()
     }
 
     async updateStoreItemLocal(items) {
         const updateOnes = [];
         items.forEach(item => {
-            const { id, ...others } = item
+            const {id, ...others} = item;
             updateOnes.push({
-                updateOne: { filter: { id }, update: { id, ...others }, upsert: true }
+                updateOne: {filter: {id}, update: {id, ...others}, upsert: true}
             })
-        })
+        });
         return this.psnCollection.bulkWrite(updateOnes);
     }
 
     async compareStoreItemsPrices(lang, region, age) {
-        const itemsOld = await this.psnCollection.find({ gameContentType: { $exists: 1 } }, { projection: { id: 1, prices: 1, dealEndDate: 1 } }).toArray();
+        const itemsOld = await this.psnCollection.find({gameContentType: {$exists: 1}}, {
+            projection: {
+                id: 1,
+                prices: 1,
+                dealEndDate: 1
+            }
+        }).toArray();
         const changes = [];
         await Promise.all([itemsOld.forEach(async itemOld => {
-            const { included } = await psn.showGameDetail(itemOld.id, lang, region, age);
-            const itemNew = setStoreItemField(included)
+            const {included} = await psn.showGameDetail(itemOld.id, lang, region, age);
+            const itemNew = setStoreItemField(included);
             const compared = compareAndFormItemChange(itemOld, itemNew);
             changes.push(compared);
-        })])
+        })]);
         if (changes.length) {
             const updateOnes = [];
-            changes.forEach(change => updateOnes.push({ updateOne: { filter: change.id, update: { $set: { 'badge-info': change['badge-info'], dealEndDate: change.dealEndDate }, $push: { history: change.history } }, upsert: false } }))
+            changes.forEach(change => updateOnes.push({
+                updateOne: {
+                    filter: change.id,
+                    update: {
+                        $set: {'badge-info': change['badge-info'], dealEndDate: change.dealEndDate},
+                        $push: {history: change.history}
+                    },
+                    upsert: false
+                }
+            }))
         }
         return this.psnCollection.bulkWrite(updateOnes);
     }
 
     async getDiscounts() {
-        const date = new Date().toISOString()
-        return this.psnCollection.find({ dealEndDate: { $gt: date } }, { projection: { _id: 0 } }).toArray()
+        const date = new Date().toISOString();
+        return this.psnCollection.find({dealEndDate: {$gt: date}}, {projection: {_id: 0}}).toArray()
     }
 
     async hasToken() {
@@ -181,7 +219,7 @@ class PSNService {
     }
 
     async setAccessTokenLocal() {
-        const { access_token } = await this.psnCollection.findOne({ access_token: { $exists: 1 } });
+        const {access_token} = await this.psnCollection.findOne({access_token: {$exists: 1}});
         accessToken.set = access_token;
     }
 }
@@ -196,10 +234,10 @@ const accessToken = {
     set set(token) {
         this.accessToken = token;
     }
-}
+};
 
 function setProfileField(profile) {
-    const date = new Date()
+    const date = new Date();
     return {
         npId: profile.npId,
         onlineId: profile.onlineId,
@@ -220,8 +258,13 @@ function setIndividualGameListField(trophies) {
     }))
 }
 
+// experiment disc only game sort out
 function setStoreItemField(item) {
-    const prices = item.attributes.skus.map(sku => ({ noPlus: sku.prices['non-plus-user'], plus: sku.prices['plus-user'] }))
+
+    const prices = item.attributes.skus ? item.attributes.skus.map(sku => ({
+        noPlus: sku.prices['non-plus-user'],
+        plus: sku.prices['plus-user']
+    })) : [];
     let price1 = 0;
     let price2 = 0;
     let discountRate1 = 0;
@@ -229,20 +272,20 @@ function setStoreItemField(item) {
     let originalPrice1 = 0;
     let originalPrice2 = 0;
     let startDate1 = null;
-    let startDate2 = null
-    let endDate1 = null
+    let startDate2 = null;
+    let endDate1 = null;
     let endDate2 = null;
     for (let p of prices) {
         if (p.noPlus['discount-percentage'] == 0 && p.plus['discount-percentage'] == 0) {
-            price1 += p.noPlus['actual-price'].value;
-            price2 += p.plus['actual-price'].value;
+            price1 += p.noPlus['actual-price'] ? p.noPlus['actual-price'].value : 0;
+            price2 += p.plus['actual-price'] ? p.plus['actual-price'].value : 0;
         } else {
             discountRate1 > p.noPlus['discount-percentage'] ? discountRate1 = discountRate1 : discountRate1 = p.noPlus['discount-percentage'];
             discountRate2 > p.plus['discount-percentage'] ? discountRate2 = discountRate2 : discountRate2 = p.plus['discount-percentage'];
-            originalPrice1 += p.noPlus['strikethrough-price'].value;
-            originalPrice2 += p.plus['strikethrough-price'].value;
-            price1 += p.noPlus['actual-price'].value;
-            price2 += p.plus['actual-price'].value;
+            originalPrice1 += p.noPlus['strikethrough-price'] ? p.noPlus['strikethrough-price'].value : 0;
+            originalPrice2 += p.plus['strikethrough-price'] ? p.plus['strikethrough-price'].value : 0;
+            price1 += p.noPlus['actual-price'] ? p.noPlus['actual-price'].value : 0;
+            price2 += p.plus['actual-price'] ? p.plus['actual-price'].value : 0;
             startDate1 > p.noPlus.availability['start-date'] ? startDate1 = startDate1 : startDate1 = p.noPlus.availability['start-date'];
             startDate2 > p.plus.availability['start-date'] ? startDate2 = startDate2 : startDate2 = p.plus.availability['start-date'];
             endDate1 > p.noPlus.availability['end-date'] ? endDate1 = endDate1 : endDate1 = p.noPlus.availability['end-date'];

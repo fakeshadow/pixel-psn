@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 
-const multer = require('fastify-multer')
+const multer = require('fastify-multer');
 
-const cpUpload = multer().fields([{ name: 'image', maxCount: 1 }, { name: 'message', maxCount: 1 }, { name: 'onlineId', maxCount: 1 }])
+const cpUpload = multer().fields([{ name: 'image', maxCount: 1 }, { name: 'message', maxCount: 1 }, { name: 'onlineId', maxCount: 1 }]);
 
 const {
     adminLogin: adminSchema,
@@ -10,7 +10,7 @@ const {
     getGame: getGameSchema,
     getTrophy: getTrophySchema,
     getMessage: getMessageSchema
-} = require('./schemas')
+} = require('./schemas');
 
 module.exports = async (fastify, opts) => {
 
@@ -28,18 +28,18 @@ module.exports = async (fastify, opts) => {
             .get('/discount', discountHandler)
             .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
             .get('/store/:gameName/:language/:region/:ageLimit', { schema: getGameSchema }, searchStoreHandler)
-    })
+    });
 
     fastify.register(async function (fastify) {
         fastify
             .addHook('preHandler', fastify.psnPreHandler)
             .post('/admin', { schema: adminSchema }, adminHandler)
-    })
+    });
 
     fastify.setErrorHandler((error, req, res) => {
         res.send(error);
     })
-}
+};
 
 module.exports[Symbol.for('plugin-meta')] = {
     decorators: {
@@ -47,7 +47,7 @@ module.exports[Symbol.for('plugin-meta')] = {
             'psnService',
         ]
     }
-}
+};
 
 
 async function getActivityHandler(req, reply) {
@@ -71,7 +71,7 @@ async function getMessageHandler(req, reply) {
 }
 
 async function deleteMessageHandler(req, reply) {
-    const threadId = req.params.threadId
+    const threadId = req.params.threadId;
     return this.psnService.deleteMessageThread(threadId);
 }
 
@@ -87,7 +87,7 @@ async function userTrophyHandler(req, reply) {
     await Promise.all([
         trophies = await this.psnService.getUserTrophiesRemote({ npCommunicationId, onlineId }),
         { npId } = await this.psnService.getPSNProfileRemote({ onlineId })
-    ])
+    ]);
 
     if (trophies && npId) await this.psnService.updateUserTrophiesLocal({ npId, npCommunicationId, trophies });
     return trophies;
@@ -99,7 +99,7 @@ async function searchStoreHandler(req, reply) {
     const region = req.params.region;
     const ageLimit = req.params.ageLimit;
 
-    const itemsCache = await this.psnService.getStoreItemLocal({ gameName })
+    const itemsCache = await this.psnService.getStoreItemLocal({ gameName });
 
     if (itemsCache.length) return itemsCache;
 
@@ -110,9 +110,9 @@ async function searchStoreHandler(req, reply) {
 }
 
 async function getProfileHandler(req, reply) {
-    const onlineId = req.params.onlineId
+    const onlineId = req.params.onlineId;
 
-    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId })
+    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId });
 
     const date = new Date();
     if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;

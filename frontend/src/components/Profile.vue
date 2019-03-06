@@ -49,29 +49,32 @@
     </v-card-text>
     <v-divider></v-divider>
     <v-list three-line v-if="profile.trophyList">
-          <template v-for="game in profile.trophyList">
-            <v-subheader
-              v-if="game.npCommunicationId"
-              :key="game.npCommunicationId"
-            >
-              {{ game.npCommunicationId }}
-            </v-subheader>
-            <v-list-tile
-              :key="game.npCommunicationId"
-            >
-              <v-list-tile-avatar>
-                <img :src="profile.avatarUrl">
-              </v-list-tile-avatar>
+      <template v-for="(game,index) in profile.trophyList">
+        <v-subheader
+          v-if="game.npCommunicationId"
+          :key="game.npCommunicationId"
+        >{{ game.npCommunicationId }}</v-subheader>
+        <v-list-tile :key="index">
+          <v-list-tile-avatar>
+            <img :src="profile.avatarUrl">
+          </v-list-tile-avatar>
 
-              <v-list-tile-content>
-                <v-list-tile-title v-html="game.progress"></v-list-tile-title>
-                <v-list-tile-sub-title v-html="game.lastUpdateDate"></v-list-tile-sub-title>
-              </v-list-tile-content>
-            </v-list-tile>
-          </template>
-        </v-list>
+          <v-list-tile-content>
+            <v-list-tile-title v-html="game.progress"></v-list-tile-title>
+            <v-list-tile-sub-title v-html="game.lastUpdateDate"></v-list-tile-sub-title>
+          </v-list-tile-content>
+        </v-list-tile>
+      </template>
+    </v-list>
+    <v-card-text v-if="!profile.trophyList">
+      <div class="text-xs-center">
+        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+      </div>
+      <div class="text-xs-center">
+        <h2>Your trophy list is updating please check again later</h2>
+      </div>
+    </v-card-text>
   </v-card>
-  
 </template>
 
 <script lang="ts">

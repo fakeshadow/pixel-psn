@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const earnedTrophiesObject = {
     type: 'object',
@@ -17,7 +17,7 @@ const earnedTrophiesObject = {
         },
     },
     additionalProperties: false
-}
+};
 
 //game object for profile use
 const gameObject = {
@@ -30,7 +30,7 @@ const gameObject = {
         lastUpdateDate: { type: 'string' }
     },
     additionalProperties: false
-}
+};
 
 
 //objects for psn store serach use
@@ -79,7 +79,7 @@ const mediaListObject = {
             }
         }
     }
-}
+};
 
 const priceObject = {
     type: 'object',
@@ -107,7 +107,7 @@ const priceObject = {
         }
     }
 
-}
+};
 
 const storeGameObject = {
     type: 'object',
@@ -116,6 +116,7 @@ const storeGameObject = {
         id: { type: 'string' },
         type: { type: 'string' },
         'badge-info': {
+            nullable: true,
             type: 'object',
             properties: {
                 'non-plus-user': {
@@ -139,10 +140,11 @@ const storeGameObject = {
             }
         },
         fileSize: {
+            nullable: true,
             type: 'object',
             properties: {
-                unit: { type: 'string' },
-                value: { type: 'number' },
+                unit: { nullable: true,type: 'string' },
+                value: { nullable: true,type: 'number' },
             }
         },
         gameContentType: { type: 'string' },
@@ -152,12 +154,13 @@ const storeGameObject = {
         description: { type: 'string' },
         platforms: { type: 'array', items: { type: 'string' } },
         provider: { type: 'string' },
-        releaseDate: { type: 'string' },
+        releaseDate: { nullable: true,type: 'string' },
         starRating: {
+            nullable: true,
             type: 'object',
             properties: {
-                score: { type: 'number' },
-                total: { type: 'number' }
+                score: { nullable: true,type: 'number' },
+                total: { nullable: true,type: 'number' }
             }
         },
         subTitles: { type: 'array', items: { type: 'string' } },
@@ -167,7 +170,7 @@ const storeGameObject = {
         prices: priceObject,
     },
     additionalProperties: false
-}
+};
 
 const profileObject = {
     type: 'object',
@@ -218,7 +221,7 @@ const profileObject = {
         }
     },
     additionalProperties: false
-}
+};
 
 const adminLogin = {
     body: {
@@ -238,7 +241,7 @@ const adminLogin = {
         additionalProperties: false
     },
     response: 200
-}
+};
 
 const getProfile = {
     params: {
@@ -254,7 +257,7 @@ const getProfile = {
     response: {
         200: profileObject
     }
-}
+};
 
 const getGame = {
     params: {
@@ -282,7 +285,7 @@ const getGame = {
             items: storeGameObject
         }
     }
-}
+};
 
 const getMessage = {
     params: {
@@ -402,11 +405,11 @@ const getMessage = {
             }
         }
     }
-}
+};
 
 module.exports = {
     adminLogin,
     getProfile,
     getGame,
     getMessage
-}
+};

@@ -22,7 +22,7 @@
     change the DATABASE setting in .env file according to your previous setting.
 
 
-## **Frontend Setup:**
+### **Frontend Setup:**
     Rename .env_sample to .env and change to match your backend.
 
     yarn build for production
@@ -43,7 +43,7 @@
     accept json body (set your post header 'Content-Type' to 'application/json')
 
     Required keys and values: 
-        'uuId': 'The uuId you get from above tutorial'
+        'uuid': 'The uuId you get from above tutorial'
         'tfA': 'as above'
         'password': your admin password in .env
 
@@ -123,7 +123,7 @@
 
 ### **todo:**
 - [ ] docker support.
-- [ ] basic front end.
+- [x] basic front end.
 - [ ] blockchain implement.
 
 

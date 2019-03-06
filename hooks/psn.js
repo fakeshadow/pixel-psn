@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const psnPreHandler = async (req, res) => {
     try {
@@ -18,7 +18,7 @@ const psnPreHandler = async (req, res) => {
     } catch (e) {
         res.send(e)
     }
-}
+};
 
 // scheduled worker here
 async function psnPreSerialHandler(req, res, payload) {
@@ -34,4 +34,4 @@ async function psnPreSerialHandler(req, res, payload) {
 module.exports = {
     psnPreHandler,
     psnPreSerialHandler
-}
+};

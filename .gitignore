@@ -1,5 +1,6 @@
 node_modules
 .history
+.idea
 .env
 token/token.json
 pixel-psn
