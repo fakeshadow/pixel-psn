@@ -83,7 +83,7 @@
               <v-img v-bind:src="screenshot.url"></v-img>
             </v-carousel-item>
           </v-carousel>
-          <v-card-text v-html="item.description">
+          <v-card-text v-html="item.detail.description">
           </v-card-text>
 
           <v-card-actions>
