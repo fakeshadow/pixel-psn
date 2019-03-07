@@ -75,6 +75,7 @@ export default {
       //     headers: { "Content-Type": "application/json" }
       //   });
       const jwt = "123456";
+      localStorage.username = this.username;
       this.$emit("gotToken", jwt);
       this.username = "";
       this.password = "";
@@ -88,6 +89,7 @@ export default {
       //     headers: { "Content-Type": "application/json" }
       //   });
       const jwt = "123456";
+      localStorage.username = this.username;
       this.$emit("gotToken", jwt);
       this.isRegister = false;
       this.email = "";

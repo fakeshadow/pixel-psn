@@ -3,7 +3,7 @@
   <v-card hover ripple height="100%" @click="modal = true">
     <v-img v-bind:src="item.detail.thumbNail" aspect-ratio="1"></v-img>
     <v-card-title text-xs-center>
-      <h4>{{item.detail.name}}</h4>
+      <h5>{{item.detail.name}}</h5>
     </v-card-title>
     <v-flex xs12 justify-center>
       <v-dialog v-model="modal" max-width="600">
@@ -114,7 +114,7 @@ export default {
       moneySymbol: '$'
     };
   },
-  beforeMount() {
+  mounted() {
     switch(this.item.region) {
       case 'US':
         this.moneySymbol = '$'

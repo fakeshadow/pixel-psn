@@ -56,7 +56,7 @@
       </v-btn>
 
       <AuthDialog v-on:gotToken="gotToken" v-if="jwt === null"/>
-      <UserMenu v-if="jwt !== null"/>
+      <UserMenu v-if="jwt !== null" v-on:lostToken="lostToken"/>
     </v-toolbar>
     <v-content>
       <v-container @click="drawer = false">
@@ -163,6 +163,11 @@ export default {
   props: {
     source: String
   },
+  mounted() {
+    if (localStorage.jwt) {
+      this.jwt = localStorage.jwt;
+    }
+  },
   methods: {
     async addSearch(newSearch) {
       this.profile = null;
@@ -202,7 +207,11 @@ export default {
       this.regionDialog = false;
     },
     async gotToken(jwt) {
-        this.jwt= jwt
+      this.jwt = jwt;
+      localStorage.jwt = this.jwt;
+    },
+    async lostToken(boolean) {
+      if (boolean) this.jwt = null;
     }
   }
 };
