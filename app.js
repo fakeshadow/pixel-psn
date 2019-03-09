@@ -8,9 +8,8 @@ const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
 const PSNService = require('./plugins/psn/service');
 const CacheService = require('./plugins/cache/service');
 
-require('dotenv').config();
-
-fastify.use(require('morgan')('tiny'));
+require('dotenv').config()
+// fastify.use(require('morgan')('dev'));
 
 const decorateFastifyInstance = async fastify => {
     const db = fastify.mongo.db;

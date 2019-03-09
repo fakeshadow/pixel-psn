@@ -102,7 +102,6 @@ async function searchStoreHandler(req, reply) {
     const itemsCache = await this.psnService.getStoreItemLocal({ gameName });
 
     if (itemsCache.length) return itemsCache;
-
     const itemsNew = await this.psnService.getStoreItemRemote({ gameName, language, region, ageLimit });
     await this.psnService.updateStoreItemLocal(itemsNew);
 

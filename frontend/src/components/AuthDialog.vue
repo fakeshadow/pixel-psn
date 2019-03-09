@@ -39,8 +39,22 @@
         <v-card-actions justify-center text-xs-center>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" flat @click="closeLogin">Close</v-btn>
-          <v-btn v-if="isRegister===false" color="blue darken-1" @click="login">Login</v-btn>
-          <v-btn v-if="isRegister===true" color="blue darken-1" @click="register">Register</v-btn>
+          <v-btn
+            v-if="isRegister===false"
+            :loading="isLoading"
+            :disabled="isLoading"
+            @click="login"
+            Raised
+            color="blue darken-1"
+          >Login</v-btn>
+          <v-btn
+            v-if="isRegister===true"
+            :loading="isLoading"
+            :disabled="isLoading"
+            @click="register"
+            Raised
+            color="blue darken-1"
+          >Register</v-btn>
         </v-card-actions>
       </v-layout>
     </v-card>
@@ -53,6 +67,7 @@ export default {
   data() {
     return {
       isRegister: false,
+      isLoading: false,
       loginDialog: null,
       username: "",
       password: "",
@@ -68,12 +83,13 @@ export default {
       this.password = "";
     },
     async login() {
-      // your auth logic here
-      //   const jwt = await fetch(`${process.env.VUE_APP_AUTHURL}login`, {
-      //     method: "post",
-      //     body: JSON.stringify({ username, password }),
-      //     headers: { "Content-Type": "application/json" }
-      //   });
+      this.isLoading = true;
+      //your auth logic here
+      // const jwt = await fetch(`${process.env.VUE_APP_AUTHURL}login`, {
+      //   method: "post",
+      //   body: JSON.stringify({ username, password }),
+      //   headers: { "Content-Type": "application/json" }
+      // });
       const jwt = "123456";
       localStorage.username = this.username;
       this.$emit("gotToken", jwt);
@@ -82,6 +98,7 @@ export default {
       this.loginDialog = false;
     },
     async register() {
+      this.isLoading = true;
       // your auth logic here
       //   const jwt = await fetch(`${process.env.VUE_APP_AUTHURL}register`, {
       //     method: "post",
