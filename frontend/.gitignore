@@ -1,9 +1,8 @@
 .DS_Store
-.history
-.idea
 node_modules
 /dist
-
+.env
+.history
 # local env files
 .env.local
 .env.*.local

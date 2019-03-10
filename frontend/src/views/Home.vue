@@ -22,11 +22,10 @@
         <v-card justify-center text-xs-center>
           <v-card-title class="headline">You are about to open following link:</v-card-title>
 
-          <v-card-text >https://github.com/fakeshadow/pixel-psn</v-card-text>
-          
-            <v-spacer></v-spacer>
-          <v-card-actions class="justify-center">
+          <v-card-text>https://github.com/fakeshadow/pixel-psn</v-card-text>
 
+          <v-spacer></v-spacer>
+          <v-card-actions class="justify-center">
             <v-btn @click="showDialog = false" href="https://github.com/fakeshadow/pixel-psn">OK</v-btn>
           </v-card-actions>
         </v-card>
@@ -36,13 +35,15 @@
 </template>
 
 <script>
+
 export default {
-  name: "Welcome",
+  name: "home",
   data() {
     return {
       showDialog: false
     };
-  }
+  },
+  methods: {}
 };
 </script>
 
@@ -50,7 +51,7 @@ export default {
 
 <style scoped>
 .welcome {
-  margin-top: 6%;
+  margin-top: 10%;
   justify-content: center;
   align-items: center;
 }

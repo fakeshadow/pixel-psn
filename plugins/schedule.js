@@ -17,7 +17,7 @@ const failSafe = {
 
 module.exports = fp(function (fastify, opts, next) {
 
-    schedule.scheduleJob('* /50 * * * *', async () => {
+    schedule.scheduleJob('33 2 * * * *', async () => {
         try {
             const date = new Date();
             console.log('refreshing token');

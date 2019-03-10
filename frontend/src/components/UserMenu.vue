@@ -45,10 +45,11 @@
       bottom
       left
       offset-x
+      v-if="profile.avatarUrl"
     >
       <template v-slot:activator="{ on }">
-        <v-btn icon large v-on="on">
-          <v-icon>notifications</v-icon>
+        <v-btn icon large v-on="on" >
+          <v-icon >notifications</v-icon>
         </v-btn>
       </template>
       <v-card>

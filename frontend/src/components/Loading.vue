@@ -17,6 +17,6 @@ export default {
 
 <style scoped>
   .v-progress-circular {
-      margin-top: 300%
+      margin-top:16%
   }
 </style>
