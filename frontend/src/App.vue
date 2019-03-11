@@ -13,7 +13,7 @@
       dark
       app
       fixed
-      scroll-toolbar-off-screen
+      scroll-off-screen
     >
       <v-toolbar-title style="width: 300px" class="ml-0 pl-3">
         <v-toolbar-side-icon @click.stop="drawer = !drawer" class="hidden-md-and-up"></v-toolbar-side-icon>
@@ -26,6 +26,7 @@
       <v-toolbar-items class="hidden-sm-and-down">
         <v-btn to="/store" flat>Store</v-btn>
         <v-btn to="/people" flat>People</v-btn>
+        <v-btn to="/talk" flat>Talk</v-btn>
         <v-btn flat>About</v-btn>
       </v-toolbar-items>
       <v-spacer></v-spacer>

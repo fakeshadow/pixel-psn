@@ -7,6 +7,7 @@ const multer = require('fastify-multer');
 const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
 const PSNService = require('./plugins/psn/service');
 const CacheService = require('./plugins/cache/service');
+const PostService = require('./plugins/post/service');
 
 require('dotenv').config()
 // fastify.use(require('morgan')('dev'));
@@ -15,11 +16,15 @@ const decorateFastifyInstance = async fastify => {
     const db = fastify.mongo.db;
 
     const psnCollection = await db.createCollection('psn');
+    const postCollection = await db.createCollection('post');
+
     const psnService = new PSNService(psnCollection);
+    const postService = new PostService(postCollection)
     const cacheService = new CacheService(psnCollection);
 
     fastify
         .decorate('psnService', psnService)
+        .decorate('postService', postService)
         .decorate('cacheService', cacheService)
         .decorate('psnPreHandler', psnPreHandler)
         .decorate('psnPreSerialHandler', psnPreSerialHandler)
@@ -36,7 +41,8 @@ fastify
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
     .register(require('./plugins/schedule'))
-    .register(require('./plugins/psn'), { prefix: '/api/psn' });
+    .register(require('./plugins/psn'), { prefix: '/api/psn' })
+    .register(require('./plugins/post'), { prefix: '/api/post' });
 
 const start = async () => {
     try {

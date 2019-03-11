@@ -38,7 +38,6 @@
         </v-card-text>
         <v-card-actions justify-center text-xs-center>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" flat @click="closeLogin">Close</v-btn>
           <v-btn
             v-if="isRegister===false"
             :loading="isLoading"
@@ -55,6 +54,7 @@
             Raised
             color="blue darken-1"
           >Register</v-btn>
+          <v-btn color="blue darken-1" flat @click="closeLogin">Close</v-btn>
         </v-card-actions>
       </v-layout>
     </v-card>

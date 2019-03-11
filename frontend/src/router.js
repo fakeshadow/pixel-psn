@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Store from './views/Store.vue'
 import People from './views/People.vue'
+import Talk from './views/Talk.vue'
 
 Vue.use(Router)
 
@@ -24,6 +25,11 @@ export default new Router({
       path: '/people',
       name: 'people',
       component: People
+    },
+    {
+      path: '/talk',
+      name: 'talk',
+      component: Talk
     }
   ]
 })
