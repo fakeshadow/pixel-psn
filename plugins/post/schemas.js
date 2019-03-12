@@ -1,20 +1,5 @@
 'use strict'
 
-const userObject = {
-    type: 'object',
-    require: ['uid', 'avatar'],
-    properties: {
-        uid: {
-            type: 'string',
-            minimum: 1
-        },
-        avatar: {
-            type: 'string'
-        }
-    },
-    additionalProperties: false
-}
-
 const postObject = {
     type: 'object',
     properties: {
@@ -47,7 +32,6 @@ const postObject = {
         lastPostTime: {
             type: 'string'
         },
-        // user: userObject,
     },
     additionalProperties: false
 }
@@ -104,7 +88,6 @@ const addPost = {
 
 module.exports = {
     addPost,
-    // editPost,
     getPosts,
     postObject
 }

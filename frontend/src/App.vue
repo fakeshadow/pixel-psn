@@ -1,10 +1,37 @@
 <template>
   <v-app>
     <v-navigation-drawer v-model="drawer" :clipped="true" fixed app disable-resize-watcher>
-      <v-list dense>
-        <router-link to="/">Home</router-link>
-        <router-link to="/store">Store</router-link>
-        <router-link to="/people">People</router-link>
+      <v-list>
+         <v-list-tile to="/" >
+            <v-list-tile-avatar>
+              <v-icon>account_box</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-title>Home</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile to="/store">
+            <v-list-tile-avatar>
+              <v-icon>settings</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-title>Store</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile to="/people">
+            <v-list-tile-avatar>
+              <v-icon>exit_to_app</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-title>People</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile to="/talk">
+            <v-list-tile-avatar>
+              <v-icon>exit_to_app</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-title>Talk</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile to="/addpost">
+            <v-list-tile-avatar>
+              <v-icon>exit_to_app</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-title>AddPost</v-list-tile-title>
+          </v-list-tile>
       </v-list>
     </v-navigation-drawer>
     <v-toolbar

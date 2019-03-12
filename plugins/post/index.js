@@ -4,22 +4,9 @@ const { addPost: addPostSchema, editPost: editPostSchema, getPosts: getPostsSche
 
 module.exports = async function (fastify, opts) {
 
-    fastify.register(async function (fastify) {
-        // fastify
-        //     .addHook('preHandler', fastify.authPreHandler)
-        //     .addHook('preHandler', fastify.postPreHandler)
-        //     .addHook('preSerialization', fastify.postPreSerialHandler);
-        fastify.get('/:cid/:mainPid', { schema: getPostsSchema }, getPostsHandler);
-    })
-
-    fastify.register(async function (fastify) {
-        // fastify
-        //     .addHook('preHandler', fastify.authPreHandler)
-        //     .addHook('preSerialization', fastify.postPreSerialHandler);
-        fastify.post('/', { schema: addPostSchema }, addPostHandler);
-        // fastify.post('/edit', { schema: editPostSchema }, editPostHandler);
-    })
-
+    fastify.get('/:cid/:mainPid', { schema: getPostsSchema }, getPostsHandler);
+    fastify.post('/', { schema: addPostSchema }, addPostHandler);
+    
     fastify.setErrorHandler((error, req, res) => {
         res.send(error);
     })
@@ -34,7 +21,6 @@ module.exports[Symbol.for('plugin-meta')] = {
 }
 
 async function addPostHandler(req, reply) {
-    // const { uid } = req.user;
     const { uid, cid, toPid, postContent, avatar } = req.body;
     const postData = {
         'uid': uid,
@@ -45,16 +31,6 @@ async function addPostHandler(req, reply) {
     }
     return this.postService.addPost(postData);
 }
-
-// async function editPostHandler(req, reply) {
-//     const { uid } = req.user
-//     const { pid, postContent } = req.body;
-//     const postData = {
-//         "pid": pid,
-//         "postContent": postContent
-//     }
-//     return this.postService.editPost(uid, postData)
-// }
 
 async function getPostsHandler(req, reply) {
     const cid = req.params.cid;

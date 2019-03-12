@@ -8,9 +8,9 @@ const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
 const PSNService = require('./plugins/psn/service');
 const CacheService = require('./plugins/cache/service');
 const PostService = require('./plugins/post/service');
+const UserService = require('./plugins/user/service');
 
-require('dotenv').config()
-// fastify.use(require('morgan')('dev'));
+require('dotenv').config();
 
 const decorateFastifyInstance = async fastify => {
     const db = fastify.mongo.db;
@@ -19,12 +19,14 @@ const decorateFastifyInstance = async fastify => {
     const postCollection = await db.createCollection('post');
 
     const psnService = new PSNService(psnCollection);
-    const postService = new PostService(postCollection)
+    const postService = new PostService(postCollection);
+    const userService = new UserService(postCollection);
     const cacheService = new CacheService(psnCollection);
 
     fastify
         .decorate('psnService', psnService)
         .decorate('postService', postService)
+        .decorate('userService', userService)
         .decorate('cacheService', cacheService)
         .decorate('psnPreHandler', psnPreHandler)
         .decorate('psnPreSerialHandler', psnPreSerialHandler)

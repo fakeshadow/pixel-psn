@@ -18,18 +18,6 @@ class PostService {
                 { $limit: 20 },
                 { $sort: { mainPid: -1 } },
                 { $project: { _id: 0 } },
-                // {
-                //     $lookup: {
-                //         from: 'users',
-                //         let: { uidDetail: '$uid' },
-                //         pipeline: [
-                //             { $match: { $expr: { $eq: ['$$uidDetail', '$uid'] } } },
-                //             { $project: { _id: 0, saltedpassword: 0 } }
-                //         ],
-                //         as: 'user'
-                //     }
-                // },
-                // { $unwind: "$user" }
             ]).toArray();
         } catch (e) {
             throw e
@@ -92,32 +80,7 @@ class PostService {
     async ensureIndexes(db) {
         await db.command({
             'collMod': this.postCollection.collectionName,
-            // validator: {
-            //     uid: {
-            //         $type: 'string'
-            //     },
-            //     avatary: {
-            //         $type: 'string'
-            //     },
-            //     pid: {
-            //         $type: 'number'
-            //     },
-            //     cid: {
-            //         $type: 'string'
-            //     },
-            //     toPid: {
-            //         $type: 'number'
-            //     },
-            //     postContent: {
-            //         $type: 'string'
-            //     },
-            //     postCount: {
-            //         $type: 'number'
-            //     },
-            //     lastPostTime: {
-            //         $type: 'date'
-            //     }
-            // }
+
         })
         await this.postCollection.createIndex({ 'pid': 1, 'mainPid': -1 }, { unique: false })
     }

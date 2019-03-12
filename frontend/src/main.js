@@ -3,6 +3,7 @@ import './plugins/vuetify'
 import App from './App.vue'
 import router from './router'
 import VueTimeAgo from 'vue-timeago'
+import CKEditor from '@ckeditor/ckeditor5-vue';
 
 Vue.config.productionTip = false
 
@@ -14,6 +15,7 @@ Vue.use(VueTimeAgo, {
     'ja': require('date-fns/locale/ja'),
   }
 })
+Vue.use( CKEditor );
 
 new Vue({
   router,
