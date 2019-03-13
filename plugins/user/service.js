@@ -15,24 +15,25 @@ class User {
         if (result.length) throw new Error('username or email taken');
 
         const saltedpassword = await saltHashPassword(password);
-        const { value } = await this.post.findOneAndUpdate({ nextUid: { $gt: 0 } }, { $inc: { nextUid: 1 } }, { returnOriginal: true, upsert: true });
+        const { value } = await this.postCollection.findOneAndUpdate({ nextUid: { $gt: 0 } }, { $inc: { nextUid: 1 } }, { returnOriginal: true, upsert: true });
         if (!value) throw new Error('Can not get uid from database');
         const { nextUid } = value;
 
         return this.postCollection.insertOne({ uid: nextUid, username: _username, email: _email, saltedpassword: saltedpassword, avatar: '' });
     }
 
-    async login(query) {
+    async loginUser(query) {
         const { username, password } = query;
         const _username = username.replace(/ /g, '').trim();
-        const { uid } = await this.userCollection.findOne({ username: _username }, { projection: { _id: 0 } });
+        const { uid, saltedpassword } = await this.postCollection.findOne({ username: _username }, { projection: { _id: 0 } });
         const checkSalt = await checksaltHashPassword(saltedpassword, password);
         if (!uid || !checkSalt) throw new Error('Failed to login')
         return { uid }
     }
 
-    async linkingPSN() {
-
+    async linkPSN(query) {
+        const { uid, npId } = query;
+        return this.postCollection.findOneAndUpdate({ uid, username: { $exists: 1 }, saltedpassword: { $exists: 1 } }, { $set: { npId } }, { upsert: false })
     }
 }
 

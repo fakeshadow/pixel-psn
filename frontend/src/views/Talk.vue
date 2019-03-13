@@ -21,61 +21,62 @@
             <template v-for="(d, index) in data">
               <v-container :key="index" pa-1>
                 <v-card light max-width="100%" hover>
-                  <v-card-title>
-                    <v-layout row wrap>
-                      <v-flex xs3 sm2 xl1>
-                        <v-menu
-                          :close-on-content-click="true"
-                          :nudge-width="300"
-                          transition="slide-x-transition"
-                          bottom
-                          left
-                          offset-x
-                        >
-                          <template v-slot:activator="{ on }">
-                            <v-avatar @click="showUserDetail(d.uid)" v-ripple v-on="on" contain>
-                              <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/e/e8/CandymyloveYasu.png"
-                              >
-                            </v-avatar>
-                          </template>
-                          <v-card>
-                            <v-img :src="cards[0].src" height="200px">
-                              <v-container fill-height fluid pa-2>
-                                <v-layout fill-height>
-                                  <v-flex xs12 align-end flexbox>
-                                    <span class="headline white--text" v-text="cards[0].title"></span>
-                                  </v-flex>
-                                  <v-flex xs12 align-end flexbox>
-                                    <v-btn icon>
-                                      <v-icon>favorite</v-icon>
-                                    </v-btn>
-                                  </v-flex>
-                                </v-layout>
-                              </v-container>
-                            </v-img>
-                          </v-card>
-                        </v-menu>
-                      </v-flex>
-                      <v-flex xs9 sm10 xl11>
-                        <v-list-tile-content>
-                          <v-list-tile-title class="title font-weight-black">{{d.uid}}</v-list-tile-title>
-                          <v-list-tile-sub-title class="subheading font-weight-thin">
-                            <timeago :datetime="d.lastPostTime" :auto-update="60"></timeago>
-                          </v-list-tile-sub-title>
-                        </v-list-tile-content>
-                      </v-flex>
-                      <v-flex xs0 sm2 xl1 mt-3></v-flex>
-                      <v-flex xs12 sm10 xl11 mt-3>
-                        <v-text
-                          class="title font-weight-regular"
-                          @click="showPostsDetail(d.mainPid)"
-                        >
-                          <div class="postContent" v-ripple>{{d.postContent}}</div>
-                        </v-text>
-                      </v-flex>
-                    </v-layout>
-                  </v-card-title>
+                  <v-layout row wrap>
+                    <v-flex xs8>
+                      <v-list>
+                        <v-list-tile>
+                          <v-menu
+                            :close-on-content-click="true"
+                            :nudge-width="300"
+                            transition="slide-x-transition"
+                            bottom
+                            left
+                            offset-x
+                          >
+                            <template v-slot:activator="{ on }">
+                              <v-list-tile-avatar v-ripple v-on="on">
+                                <img
+                                  src="https://upload.wikimedia.org/wikipedia/commons/e/e8/CandymyloveYasu.png"
+                                >
+                              </v-list-tile-avatar>
+                            </template>
+                            <v-card>
+                              <v-img :src="cards[0].src" height="200px">
+                                <v-container fill-height fluid pa-2>
+                                  <v-layout fill-height>
+                                    <v-flex xs12 align-end flexbox>
+                                      <span class="headline white--text" v-text="cards[0].title"></span>
+                                    </v-flex>
+                                    <v-flex xs12 align-end flexbox>
+                                      <v-btn icon>
+                                        <v-icon>favorite</v-icon>
+                                      </v-btn>
+                                    </v-flex>
+                                  </v-layout>
+                                </v-container>
+                              </v-img>
+                            </v-card>
+                          </v-menu>
+
+                          <v-list-tile-content>
+                            <v-list-tile-title class="subheading font-weight-black">{{d.uid}}</v-list-tile-title>
+                            <v-list-tile-sub-title class="subheading font-weight-thin">
+                              <timeago :datetime="d.lastPostTime" :auto-update="60"></timeago>
+                            </v-list-tile-sub-title>
+                          </v-list-tile-content>
+                        </v-list-tile>
+                      </v-list>
+                    </v-flex>
+                    <v-flex xs4></v-flex>
+                    <v-flex xs12 pa-3 v-ripple @click="showPostsDetail(d.mainPid)">
+                      <v-text
+                        v-html="d.postContent"
+                        v-ripple
+                        class="postContent title font-weight-regular"
+                        @click="showPostsDetail(d.mainPid)"
+                      ></v-text>
+                    </v-flex>
+                  </v-layout>
 
                   <v-card-actions>
                     <v-layout row wrap justify-end>
@@ -168,7 +169,6 @@ export default {
 
 <style scoped>
 .postContent {
-  text-align-last: auto;
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }

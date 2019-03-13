@@ -4,7 +4,9 @@ const fastify = require('fastify')();
 const fp = require('fastify-plugin');
 const multer = require('fastify-multer');
 
+const { authPreHandler } = require('./hooks/auth');
 const { psnPreHandler, psnPreSerialHandler } = require('./hooks/psn');
+
 const PSNService = require('./plugins/psn/service');
 const CacheService = require('./plugins/cache/service');
 const PostService = require('./plugins/post/service');
@@ -28,6 +30,7 @@ const decorateFastifyInstance = async fastify => {
         .decorate('postService', postService)
         .decorate('userService', userService)
         .decorate('cacheService', cacheService)
+        .decorate('authPreHandler', authPreHandler)
         .decorate('psnPreHandler', psnPreHandler)
         .decorate('psnPreSerialHandler', psnPreSerialHandler)
 };
@@ -39,11 +42,13 @@ async function connectToDatabases(fastify) {
 
 fastify
     .register(require('fastify-cors'), { origin: true, methods: ['GET', 'POST'] })
+    .register(require('fastify-jwt'), { secret: process.env.JWT, algorithms: ['RS256'] })
     .register(multer.contentParser)
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
     .register(require('./plugins/schedule'))
     .register(require('./plugins/psn'), { prefix: '/api/psn' })
+    .register(require('./plugins/user'), { prefix: '/api/user' })
     .register(require('./plugins/post'), { prefix: '/api/post' });
 
 const start = async () => {

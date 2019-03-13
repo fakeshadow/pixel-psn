@@ -15,8 +15,9 @@ class PostService {
 
             return this.postCollection.aggregate([
                 { $match: { $and: [aggregate, { mainPid: { $lt: mainPid } }] } },
-                { $limit: 20 },
                 { $sort: { mainPid: -1 } },
+                { $limit: 20 },
+                
                 { $project: { _id: 0 } },
             ]).toArray();
         } catch (e) {

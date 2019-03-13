@@ -22,15 +22,6 @@
               </div>
             </v-card-text>
           </v-flex>
-          <v-flex xs12>
-            <v-alert
-              :value="showError"
-              type="error"
-              dismissible
-              transition="scale-transition"
-              @click="showError = !showError"
-            >{{this.error}}</v-alert>
-          </v-flex>
           <v-card-actions>
             <v-btn :loading="isLoading" :disabled="isLoading" @click="sendMessage" Raised>Confirm</v-btn>
           </v-card-actions>
@@ -48,8 +39,8 @@
       v-if="profile.avatarUrl"
     >
       <template v-slot:activator="{ on }">
-        <v-btn icon large v-on="on" >
-          <v-icon >notifications</v-icon>
+        <v-btn icon large v-on="on">
+          <v-icon>notifications</v-icon>
         </v-btn>
       </template>
       <v-card>
@@ -127,15 +118,6 @@
                       ></v-text-field>
                     </v-card-text>
                   </v-flex>
-                  <v-flex xs12>
-                    <v-alert
-                      :value="showError"
-                      type="error"
-                      dismissible
-                      transition="scale-transition"
-                      @click="showError = !showError"
-                    >{{this.error}}</v-alert>
-                  </v-flex>
                   <v-card-actions>
                     <v-btn
                       :loading="isLoading"
@@ -180,22 +162,16 @@
 <script>
 export default {
   name: "UserMenu",
+  props: ["profile"],
   data: () => ({
     menu: false,
     messageMenu: false,
-    profile: {
-      onlineId: "not linked",
-      avatarUrl: null
-    },
     username: "No user found",
     linkPSNDialog: false,
     sendMessageDialog: false,
     linkingPSNId: null,
     linkingCode: null,
     isLoading: false,
-    showError: false,
-    showBottomAlert: false,
-    error: null,
     messages: [
       { onlineId: "placeholder1", message: "placeholder1 message" },
       { onlineId: "placeholder2", message: "placeholder2 message" },
@@ -229,28 +205,18 @@ export default {
       this.linkingCode = text;
     },
     logout() {
-      localStorage.removeItem("jwt");
-      localStorage.removeItem("onlineId");
-      localStorage.removeItem("username");
-      this.$emit("lostToken", true);
+      this.$emit("gotLogout", true);
     },
     async linkingPSN() {
       try {
         this.isLoading = true;
-        const response = await fetch(
-          process.env.VUE_APP_PSNURL + this.linkingPSNId
-        );
-        const profile = await response.json();
-        if (!profile.aboutMe) throw new Error("No profile data found");
-        // if (profile.aboutMe !== this.linkingCode)
-        //   throw new Error("The linking code doesn't match");
-        this.profile = profile;
-        localStorage.onlineId = profile.onlineId;
+        await fetch(process.env.VUE_APP_USERURL + "link");
+
         this.isLoading = false;
       } catch (e) {
         this.showError = true;
         this.isLoading = false;
-        this.error = e;
+        this.$emit("gotSnack", { error: e });
       }
     },
     async sendMessage(e) {
@@ -277,11 +243,11 @@ export default {
         this.messageContent = null;
         this.image = "";
         this.sendMessageDialog = false;
-        this.$emit("gotSuccess", "Message Sent");
-      } catch (err) {
+        this.$emit("gotSnack", { success: "Message Sent" });
+      } catch (e) {
         this.showError = true;
         this.isLoading = false;
-        this.error = err;
+        this.$emit("gotSnack", { error: e });
       }
     },
     onFileChange(e) {
@@ -289,10 +255,9 @@ export default {
       const files = e.target.files || e.dataTransfer.files;
       if (!files.length) return;
       if (files[0].size >= 999999) {
-        this.error =
-          "Image file too big. Please reduce the size to less than 1mb";
-        this.showError = true;
-        return;
+        return this.$emit("gotSnack", {
+          error: "Image file too big. Please reduce the size to less than 1mb"
+        });
       }
       this.createImage(files[0]);
     },

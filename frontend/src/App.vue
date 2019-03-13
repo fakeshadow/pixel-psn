@@ -2,36 +2,30 @@
   <v-app>
     <v-navigation-drawer v-model="drawer" :clipped="true" fixed app disable-resize-watcher>
       <v-list>
-         <v-list-tile to="/" >
-            <v-list-tile-avatar>
-              <v-icon>account_box</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>Home</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile to="/store">
-            <v-list-tile-avatar>
-              <v-icon>settings</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>Store</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile to="/people">
-            <v-list-tile-avatar>
-              <v-icon>exit_to_app</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>People</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile to="/talk">
-            <v-list-tile-avatar>
-              <v-icon>exit_to_app</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>Talk</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile to="/addpost">
-            <v-list-tile-avatar>
-              <v-icon>exit_to_app</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>AddPost</v-list-tile-title>
-          </v-list-tile>
+        <v-list-tile to="/">
+          <v-list-tile-avatar>
+            <v-icon>account_box</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-title>Home</v-list-tile-title>
+        </v-list-tile>
+        <v-list-tile to="/store">
+          <v-list-tile-avatar>
+            <v-icon>settings</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-title>Store</v-list-tile-title>
+        </v-list-tile>
+        <v-list-tile to="/people">
+          <v-list-tile-avatar>
+            <v-icon>exit_to_app</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-title>People</v-list-tile-title>
+        </v-list-tile>
+        <v-list-tile to="/talk">
+          <v-list-tile-avatar>
+            <v-icon>exit_to_app</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-title>Talk</v-list-tile-title>
+        </v-list-tile>
       </v-list>
     </v-navigation-drawer>
     <v-toolbar
@@ -58,8 +52,13 @@
       </v-toolbar-items>
       <v-spacer></v-spacer>
 
-      <AuthDialog v-on:gotToken="gotToken" v-if="jwt === null"/>
-      <UserMenu v-if="jwt !== null" v-on:lostToken="lostToken"/>
+      <AuthDialog v-on:gotLogin="gotLogin" v-on:gotSnack="gotSnack" v-if="jwt === null"/>
+      <UserMenu
+        v-if="jwt !== null"
+        v-on:gotLogout="gotLogout"
+        v-on:gotSnack="gotSnack"
+        v-bind:profile="profile"
+      />
     </v-toolbar>
     <v-snackbar v-model="showSnack" :timeout="5000" top class="text-xs-center">
       {{ this.snackMessage }}
@@ -85,23 +84,36 @@ export default {
     return {
       drawer: false,
       jwt: null,
+      profile: null,
 
       showSnack: false,
       snackMessage: null
     };
   },
   mounted() {
-    if (localStorage.jwt) {
+    if (localStorage.jwt && localStorage.profile) {
       this.jwt = localStorage.jwt;
+      this.profile = localStorage.profile;
+    } else {
+      this.jwt = null;
+      this.profile = null;
     }
   },
   methods: {
-    async gotToken(jwt) {
+    gotLogin(data) {
+      const { jwt, profile } = data;
       this.jwt = jwt;
+      this.profile = profile;
       localStorage.jwt = this.jwt;
+      localStorage.profile = this.profile;
     },
-    async lostToken(boolean) {
-      if (boolean) this.jwt = null;
+    gotLogout(boolean) {
+      if (boolean) {
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("profile");
+        this.jwt = null;
+        this.profile = null;
+      }
     },
     gotSnack(snack) {
       if (snack.error) {

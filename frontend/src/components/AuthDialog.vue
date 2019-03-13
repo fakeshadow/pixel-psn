@@ -68,7 +68,7 @@ export default {
     return {
       isRegister: false,
       isLoading: false,
-      loginDialog: null,
+      loginDialog: false,
       username: "",
       password: "",
       email: ""
@@ -81,38 +81,68 @@ export default {
       this.email = "";
       this.username = "";
       this.password = "";
+      this.isLoading = false;
     },
     async login() {
-      this.isLoading = true;
-      //your auth logic here
-      // const jwt = await fetch(`${process.env.VUE_APP_AUTHURL}login`, {
-      //   method: "post",
-      //   body: JSON.stringify({ username, password }),
-      //   headers: { "Content-Type": "application/json" }
-      // });
-      const jwt = "123456";
-      localStorage.username = this.username;
-      this.$emit("gotToken", jwt);
-      this.username = "";
-      this.password = "";
-      this.loginDialog = false;
+      try {
+        this.isLoading = true;
+        const response = await fetch(`${process.env.VUE_APP_USERURL}login`, {
+          method: "post",
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          }),
+          headers: { "Content-Type": "application/json" }
+        });
+        const result = await response.json();
+
+        if (result.error) {
+          throw result.message;
+        } else {
+          this.$emit("gotLogin", { jwt: result.jwt });
+          this.$emit("gotSnack", { success: "Login Success" });
+        }
+        this.closeLogin();
+      } catch (e) {
+        this.isLoading = false;
+        this.$emit("gotSnack", { error: e });
+      }
     },
     async register() {
-      this.isLoading = true;
-      // your auth logic here
-      //   const jwt = await fetch(`${process.env.VUE_APP_AUTHURL}register`, {
-      //     method: "post",
-      //     body: JSON.stringify({ username, password,email }),
-      //     headers: { "Content-Type": "application/json" }
-      //   });
-      const jwt = "123456";
-      localStorage.username = this.username;
-      this.$emit("gotToken", jwt);
-      this.isRegister = false;
-      this.email = "";
-      this.username = "";
-      this.password = "";
-      this.loginDialog = false;
+      try {
+        this.isLoading = true;
+
+        const response = await fetch(`${process.env.VUE_APP_USERURL}register`, {
+          method: "post",
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password,
+            email: this.email
+          }),
+          headers: { "Content-Type": "application/json" }
+        });
+        const result = await response.json();
+
+        if (result.error) {
+          throw result.message;
+        } else {
+          const response = await fetch(`${process.env.VUE_APP_USERURL}login`, {
+            method: "post",
+            body: JSON.stringify({
+              username: this.username,
+              password: this.password
+            }),
+            headers: { "Content-Type": "application/json" }
+          });
+          const jwt = await response.json();
+          this.$emit("gotLogin", jwt);
+          this.$emit("gotSnack", { success: "Register Success" });
+        }
+        this.closeLogin();
+      } catch (e) {
+        this.isLoading = false;
+        this.$emit("gotSnack", { error: e });
+      }
     }
   }
 };

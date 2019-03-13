@@ -5,8 +5,12 @@ const { addPost: addPostSchema, editPost: editPostSchema, getPosts: getPostsSche
 module.exports = async function (fastify, opts) {
 
     fastify.get('/:cid/:mainPid', { schema: getPostsSchema }, getPostsHandler);
-    fastify.post('/', { schema: addPostSchema }, addPostHandler);
-    
+
+    fastify.register(async function (fastify) {
+        fastify.addHook('preHandler', fastify.authPreHandler)
+        fastify.post('/', { schema: addPostSchema }, addPostHandler);
+    })
+
     fastify.setErrorHandler((error, req, res) => {
         res.send(error);
     })
@@ -21,7 +25,8 @@ module.exports[Symbol.for('plugin-meta')] = {
 }
 
 async function addPostHandler(req, reply) {
-    const { uid, cid, toPid, postContent, avatar } = req.body;
+    const { uid } = req.user;
+    const { cid, toPid, postContent, avatar } = req.body;
     const postData = {
         'uid': uid,
         'avatar': avatar,

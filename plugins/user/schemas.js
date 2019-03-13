@@ -69,8 +69,26 @@ const login = {
     }
 }
 
+const linkPSN = {
+    body: {
+        type: 'object',
+        require: ['onlineId', 'aboutMe'],
+        properties: {
+            onlineId: {
+                type: 'string'
+            },
+            aboutMe: {
+                type: 'string'
+            }
+        },
+        additionalProperties: false
+    },
+    response: 200
+}
+
 module.exports = {
     register,
     login,
     userObject,
+    linkPSN
 }
