@@ -76,8 +76,8 @@
       <template v-slot:activator="{ on }">
         <v-btn icon large v-on="on">
           <v-avatar size="32px" tile>
-            <img v-if="!profile.avatarUrl" src="../assets/playstation-brands.svg">
-            <img v-if="profile.avatarUrl" v-bind:src="profile.avatarUrl">
+            <img v-if="!psnProfile.avatarUrl" src="../assets/playstation-brands.svg">
+            <img v-if="psnProfile.avatarUrl" v-bind:src="psnProfile.avatarUrl">
           </v-avatar>
         </v-btn>
       </template>
@@ -86,19 +86,19 @@
         <v-list>
           <v-list-tile avatar>
             <v-list-tile-avatar>
-              <img v-if="profile.avatarUrl" v-bind:src="profile.avatarUrl">
+              <img v-if="psnProfile.avatarUrl" v-bind:src="psnProfile.avatarUrl">
             </v-list-tile-avatar>
 
             <v-list-tile-content>
-              <v-list-tile-title>{{profile.onlineId}}</v-list-tile-title>
-              <v-list-tile-sub-title>{{username}}</v-list-tile-sub-title>
+              <v-list-tile-title>{{psnProfile.onlineId}}</v-list-tile-title>
+              <v-list-tile-sub-title>{{profile.username}}</v-list-tile-sub-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
 
         <v-divider></v-divider>
         <v-list>
-          <v-list-tile @click="openLinkPSNDialog" v-if="profile.onlineId =='not linked'">
+          <v-list-tile @click="openLinkPSNDialog" v-if="psnProfile.onlineId =='not linked'">
             <v-dialog v-model="linkPSNDialog" max-width="300">
               <v-card>
                 <v-layout row wrap justify-center text-xs-center>
@@ -135,13 +135,13 @@
             <v-list-tile-title>Link Your PSNID</v-list-tile-title>
           </v-list-tile>
 
-          <v-list-tile @click="logout" v-if="profile.onlineId !=='not linked'">
+          <v-list-tile @click="logout" v-if="psnProfile.onlineId !=='not linked'">
             <v-list-tile-avatar>
               <v-icon>account_box</v-icon>
             </v-list-tile-avatar>
             <v-list-tile-title>My Page</v-list-tile-title>
           </v-list-tile>
-          <v-list-tile @click="logout" v-if="profile.onlineId !=='not linked'">
+          <v-list-tile @click="logout" v-if="psnProfile.onlineId !=='not linked'">
             <v-list-tile-avatar>
               <v-icon>settings</v-icon>
             </v-list-tile-avatar>
@@ -166,7 +166,10 @@ export default {
   data: () => ({
     menu: false,
     messageMenu: false,
-    username: "No user found",
+    psnProfile: {
+      onlineId: "not linked",
+      avatarUrl: ""
+    },
     linkPSNDialog: false,
     sendMessageDialog: false,
     linkingPSNId: null,
@@ -182,13 +185,35 @@ export default {
     messageContent: null
   }),
   async mounted() {
-    if (localStorage.onlineId) {
-      const onlineId = localStorage.onlineId;
-      const response = await fetch(process.env.VUE_APP_PSNURL + onlineId);
-      this.profile = await response.json();
-    }
-    if (localStorage.username) {
-      this.username = localStorage.username;
+    if (localStorage.onlineId && localStorage.avatarUrl) {
+      this.psnProfile = {
+        onlineId: localStorage.onlineId,
+        avatarUrl: localStorage.avatarUrl
+      };
+    } else if (localStorage.npId) {
+      try {
+        const response = await fetch(process.env.VUE_APP_PSNURL, {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            npId: localStorage.npId
+          })
+        });
+        const result = await response.json();
+        if (result.error) throw result.message;
+        this.psnProfile = {
+          onlineId: result.onlineId,
+          avatarUrl: result.avatarUrl
+        };
+        localStorage.onlineId = result.onlineId;
+        localStorage.avatarUrl = result.avatarUrl;
+      } catch (e) {
+        this.$emit("gotSnack", {
+          error: "Failed to load PSN data. Please relogin"
+        });
+      }
     }
   },
   methods: {
@@ -200,7 +225,7 @@ export default {
       this.menu = false;
       let text = "";
       const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      for (var i = 0; i < 5; i++)
+      for (let i = 0; i < 5; i++)
         text += possible.charAt(Math.floor(Math.random() * possible.length));
       this.linkingCode = text;
     },
@@ -210,11 +235,31 @@ export default {
     async linkingPSN() {
       try {
         this.isLoading = true;
-        await fetch(process.env.VUE_APP_USERURL + "link");
-
+        const jwt = localStorage.jwt;
+        const response = await fetch(process.env.VUE_APP_USERURL + "link", {
+          method: "post",
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            onlineId: this.linkingPSNId,
+            aboutMe: this.linkingCode
+          })
+        });
+        const result = await response.json();
+        if (result.error) throw result.message;
+        const { psnProfile } = result;
+        this.psnProfile = {
+          onlineId: psnProfile.onlineId,
+          avatarUrl: psnProfile.avatarUrl
+        };
+        localStorage.onlineId = psnProfile.onlineId;
+        localStorage.avatarUrl = psnProfile.avatarUrl;
+        localStorage.npId = psnProfile.npId;
         this.isLoading = false;
+        this.linkPSNDialog = false;
       } catch (e) {
-        this.showError = true;
         this.isLoading = false;
         this.$emit("gotSnack", { error: e });
       }

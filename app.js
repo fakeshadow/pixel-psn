@@ -47,6 +47,7 @@ fastify
     .register(fp(connectToDatabases))
     .register(fp(decorateFastifyInstance))
     .register(require('./plugins/schedule'))
+    .register(require('./plugins/test'), { prefix: '/' })
     .register(require('./plugins/psn'), { prefix: '/api/psn' })
     .register(require('./plugins/user'), { prefix: '/api/user' })
     .register(require('./plugins/post'), { prefix: '/api/post' });

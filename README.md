@@ -49,7 +49,14 @@
 
 
 ### **get profile**                    
-    [GET]     /api/psn/user_psn_id
+    [POST]     /api/psn/
+
+    accept json body (set your post header 'Content-Type' to 'application/json')
+
+    Accept keys and values:
+        'onlineId': 
+        'npId':
+        * will use onlineId to query if both keys are provided
 
 
 ### **get trophy by game** 

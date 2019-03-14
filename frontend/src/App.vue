@@ -91,26 +91,35 @@ export default {
     };
   },
   mounted() {
-    if (localStorage.jwt && localStorage.profile) {
+    if (localStorage.jwt && localStorage.username && localStorage.uid) {
       this.jwt = localStorage.jwt;
-      this.profile = localStorage.profile;
-    } else {
-      this.jwt = null;
-      this.profile = null;
+      this.profile = {
+        uid: localStorage.uid,
+        username: localStorage.username,
+        npId: localStorage.npId
+      };
     }
   },
   methods: {
     gotLogin(data) {
       const { jwt, profile } = data;
       this.jwt = jwt;
-      this.profile = profile;
-      localStorage.jwt = this.jwt;
-      localStorage.profile = this.profile;
+      this.profile = {
+        uid: profile.uid,
+        username: profile.username,
+        npId: profile.npId
+      };
+      localStorage.jwt = jwt;
+      localStorage.username = profile.username;
+      localStorage.npId = profile.npId;
+      localStorage.uid = profile.uid;
     },
     gotLogout(boolean) {
       if (boolean) {
         localStorage.removeItem("jwt");
-        localStorage.removeItem("profile");
+        localStorage.removeItem("username");
+        localStorage.removeItem("npId");
+        localStorage.removeItem("uid");
         this.jwt = null;
         this.profile = null;
       }

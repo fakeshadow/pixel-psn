@@ -3,7 +3,8 @@
 const {
     login: loingSchema,
     register: registerSchema,
-    linkPSN: linkPSNSchema
+    linkPSN: linkPSNSchema,
+    getUser: getUserSchema
 } = require('./schemas')
 
 module.exports = async (fastify, opts) => {
@@ -13,7 +14,9 @@ module.exports = async (fastify, opts) => {
 
     fastify.register(async function (fastify) {
         fastify.addHook('preHandler', fastify.authPreHandler)
-        fastify.post('/link', { schema: linkPSNSchema }, linkPSNHandler);
+        fastify
+            .get('/', { schema: getUserSchema }, getUserHandler)
+            .post('/link', { schema: linkPSNSchema }, linkPSNHandler);
     })
 
     fastify.setErrorHandler((error, req, res) => {
@@ -39,13 +42,19 @@ async function registerHandler(req, reply) {
 async function loginHandler(req, reply) {
     const { username, password } = req.body;
     const userData = await this.userService.loginUser({ username, password });
-    return { jwt: this.jwt.sign(userData) }
+    return { jwt: this.jwt.sign(userData), profile: userData }
 }
 
 async function linkPSNHandler(req, reply) {
     const { uid } = req.user;
     const { onlineId, aboutMe } = req.body;
     const profile = await this.psnService.getPSNProfileRemote({ onlineId });
-    if (profile.aboutMe !== aboutMe) throw new Error('profile validation failed');
-    return this.userService.linkPSN({ uid, npId: profile.npId })
+    // if (profile.aboutMe !== aboutMe) throw new Error('profile validation failed');
+    await this.userService.linkPSN({ uid, npId: profile.npId });
+    return { psnProfile: profile }
+}
+
+async function getUserHandler(req, reply) {
+    const { uid } = req.params
+    return this.userService.getUser({ uid });
 }

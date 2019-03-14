@@ -122,8 +122,11 @@ class PSNService {
     }
 
     async getTrophySummaryLocal(query) {
-        const { onlineId } = query;
-        return this.psnCollection.findOne({ onlineId, trophySummary: { $exists: 1 } }, { projection: { _id: 0 } });
+        const { onlineId, npId } = query;
+
+        const aggregate = npId ? { npId: npId, trophySummary: { $exists: 1 } } : { onlineId: onlineId, trophySummary: { $exists: 1 } }
+        console.log(aggregate)
+        return this.psnCollection.findOne(aggregate, { projection: { _id: 0 } });
     }
 
     async updateProfileLocal(profile) {

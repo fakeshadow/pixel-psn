@@ -14,7 +14,7 @@ const userObject = {
         email: {
             type: 'string'
         },
-        avatar: {
+        npId: {
             type: 'string'
         }
     },
@@ -58,13 +58,26 @@ const login = {
     response: {
         200: {
             type: 'object',
-            require: ['jwt'],
+            require: ['jwt', 'profile'],
             properties: {
                 jwt: {
                     type: 'string'
-                }
+                },
+                profile: userObject
             },
             additionalProperties: false
+        }
+    }
+};
+
+const getUser = {
+    params: {
+        type: 'object',
+        properties: {
+            uid: {
+                type: 'integer',
+                minmum: 1
+            }
         }
     }
 }
@@ -89,6 +102,7 @@ const linkPSN = {
 module.exports = {
     register,
     login,
+    getUser,
     userObject,
     linkPSN
 }

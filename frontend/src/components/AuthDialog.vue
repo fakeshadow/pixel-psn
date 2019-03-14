@@ -99,7 +99,7 @@ export default {
         if (result.error) {
           throw result.message;
         } else {
-          this.$emit("gotLogin", { jwt: result.jwt });
+          this.$emit("gotLogin", result);
           this.$emit("gotSnack", { success: "Login Success" });
         }
         this.closeLogin();
@@ -134,8 +134,8 @@ export default {
             }),
             headers: { "Content-Type": "application/json" }
           });
-          const jwt = await response.json();
-          this.$emit("gotLogin", jwt);
+          const result = await response.json();
+          this.$emit("gotLogin", result);
           this.$emit("gotSnack", { success: "Register Success" });
         }
         this.closeLogin();

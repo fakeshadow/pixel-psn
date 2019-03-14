@@ -143,8 +143,8 @@ const storeGameObject = {
             nullable: true,
             type: 'object',
             properties: {
-                unit: { nullable: true,type: 'string' },
-                value: { nullable: true,type: 'number' },
+                unit: { nullable: true, type: 'string' },
+                value: { nullable: true, type: 'number' },
             }
         },
         gameContentType: { type: 'string' },
@@ -154,13 +154,13 @@ const storeGameObject = {
         description: { type: 'string' },
         platforms: { type: 'array', items: { type: 'string' } },
         provider: { type: 'string' },
-        releaseDate: { nullable: true,type: 'string' },
+        releaseDate: { nullable: true, type: 'string' },
         starRating: {
             nullable: true,
             type: 'object',
             properties: {
-                score: { nullable: true,type: 'number' },
-                total: { nullable: true,type: 'number' }
+                score: { nullable: true, type: 'number' },
+                total: { nullable: true, type: 'number' }
             }
         },
         subTitles: { type: 'array', items: { type: 'string' } },
@@ -244,13 +244,14 @@ const adminLogin = {
 };
 
 const getProfile = {
-    params: {
+    body: {
         type: 'object',
-        required: ['onlineId'],
         properties: {
             onlineId: {
                 type: 'string',
-                // pattern: '^[0-9a-fA-F]{24}'
+            },
+            npId: {
+                type: 'string',
             }
         }
     },

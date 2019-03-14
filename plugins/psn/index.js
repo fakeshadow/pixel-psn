@@ -26,7 +26,7 @@ module.exports = async (fastify, opts) => {
         fastify
             .addHook('preSerialization', fastify.psnPreSerialHandler)
             .get('/discount', discountHandler)
-            .get('/:onlineId', { schema: getProfileSchema }, getProfileHandler)
+            .post('/', { schema: getProfileSchema }, getProfileHandler)
             .get('/store/:gameName/:language/:region/:ageLimit', { schema: getGameSchema }, searchStoreHandler)
     });
 
@@ -109,14 +109,18 @@ async function searchStoreHandler(req, reply) {
 }
 
 async function getProfileHandler(req, reply) {
-    const onlineId = req.params.onlineId;
+    const { onlineId, npId } = req.body
 
-    const profileCached = await this.psnService.getTrophySummaryLocal({ onlineId });
+    const query = onlineId ? { onlineId } : { npId }
+    const profileCached = await this.psnService.getTrophySummaryLocal(query);
 
     const date = new Date();
     if (profileCached && date - profileCached.lastUpdateDate < process.env.TIMEGATE) return profileCached;
 
-    const profile = await this.psnService.getPSNProfileRemote({ onlineId });
+    const _onlineId = onlineId ? onlineId : profileCached.onlineId
+
+    const profile = await this.psnService.getPSNProfileRemote({ onlineId: _onlineId });
+
     await this.psnService.updateProfileLocal(profile);
 
     return { type: 'profile', profile };
